@@ -151,8 +151,8 @@ print_cmd_info_nonl	= printf "[%s] - %-20s : %s " `date +%H:%M:%S` $(1) $(2)
     ############################################################################
 	
 $(BUILD_DIRS)	:
-	@$(call print_cmd_info,"MK WORK DIR",$(dir $@))
-	@mkdir -p $(dir $@)
+	@$(call print_cmd_info,"MK WORK DIR",$@)
+	@mkdir -p $@
 
 ################################################################################
 #### RISC-V GCC toolchain
