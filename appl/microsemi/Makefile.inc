@@ -121,11 +121,7 @@ OBJS 		= $(ASM_SOURCES:.S=.o) $(C_SOURCES:.c=.o)
     ############################################################################
 .PHONY: clean all code binary run
 
-all: $(TARGET).elf $(TARGET).dump
-
-run: $(TARGET).elf $(TARGET).dump 
-	@$(call print_cmd_info,"RUNNING SPIKE",$@)
-	@spike --isa=RV32IM  $(BUILD_DIR)/$(TARGET).elf 
+all: $(TARGET).elf  $(TARGET).hex $(TARGET).dump
 
 clean: 
 	@$(call print_cmd_info,"CLEANUP",$@)
@@ -225,7 +221,7 @@ $(BUILD_DIR)/%.d: %.S $(CONFIG) | $(BUILD_DIRS)
 
 %.hex: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN HEX",$@)
-	@$(OBJCOPY) -O ihex $(BUILD_DIR)/$(<) $(BUILD_DIR)/$(@)
+	@$(OBJCOPY) -O ihex $(<) $(BUILD_DIR)/$(@)
 
 %.nm: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN NM",$@)

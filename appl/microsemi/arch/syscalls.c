@@ -86,10 +86,7 @@ static long prvSyscallToHost(long which, long arg0, long arg1, long arg2 , long 
 	magic_mem[3] = arg2;
 	magic_mem[4] = arg3;
 	magic_mem[5] = arg4;
-	__sync_synchronize();
-	write_csr(mtohost, (long) magic_mem);
-	while (swap_csr(mfromhost, 0) == 0)
-		;
+	
 	return magic_mem[0];
 }
 /*-----------------------------------------------------------*/
