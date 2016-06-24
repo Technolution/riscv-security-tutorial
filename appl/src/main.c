@@ -47,6 +47,8 @@ equivalent in ticks using the portTICK_PERIOD_MS constant. */
  * The check timer callback function, as described at the top of this file.
  */
 static void prvCheckTimerCallback( TimerHandle_t xTimer );
+static void ledTimerCallback(__attribute__ ((unused)) TimerHandle_t xTimer );
+
 
 /*-----------------------------------------------------------*/
 extern int systrap;
