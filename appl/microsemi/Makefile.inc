@@ -29,8 +29,8 @@ RISCV 	= /usr/local/riscv32
 CROSS	= riscv32-unknown-elf
 ISA		= RV32IM 
 
-SPIKE_DIR 		= spike
-BUILD_DIR 		= spike/work
+TARGET_DIR 	= microsemi
+BUILD_DIR 		= $(TARGET_DIR)/work
 SRC_DIR 		= src
 COMMON_DIR 		= common
 
@@ -42,7 +42,7 @@ CONFIG			= Makefile
 TARGET 		= main
 CTARGET		= main
 
-LINK_FILE = $(SPIKE_DIR)/arch/link.ld
+LINK_FILE = $(TARGET_DIR)/arch/link.lds
 
 # flags to trigger warning generation
 WFLAGS = -Wall -Wextra -Wshadow -Wpointer-arith -Wbad-function-cast \
@@ -78,14 +78,18 @@ PORT_ASM = $(FREERTOS_SOURCE_DIR)/portable/GCC/RISCV/portasm.S
 
 # application
 APP_SRC = $(SRC_DIR)/main.c \
-	$(SPIKE_DIR)/arch/clib.c \
-	$(SPIKE_DIR)/arch/syscalls.c \
-	$(SPIKE_DIR)/serial.c \
 	$(SRC_DIR)/freertos_hooks.c \
-	$(SRC_DIR)/cmd_handler.c
+	$(SRC_DIR)/cmd_handler.c \
+	$(TARGET_DIR)/serial.c \
+	$(TARGET_DIR)/syscall.c \
+	$(TARGET_DIR)/drivers/CoreUARTapb/core_uart_apb.c \
+	$(TARGET_DIR)/drivers/CoreGPIO/core_gpio.c \
+	$(TARGET_DIR)/drivers/CoreTimer/core_timer.c \
+	$(TARGET_DIR)/drivers_sifive/plic.c \
+	$(TARGET_DIR)/hal/hw_reg_access.c 
 
 # support files
-ASM_SOURCES =$(SPIKE_DIR)/arch/boot.S $(PORT_ASM)
+ASM_SOURCES =$(TARGET_DIR)/arch/boot.S $(PORT_ASM)
 C_SOURCES 	= $(FREERTOS_SRC) $(PORT_SRC) $(APP_SRC)
 
 LIBS 		=
@@ -95,8 +99,13 @@ INCLUDE_DIRS = 	src $(RISCV)/include/spike \
 				$(FREERTOS_SOURCE_DIR) \
 				$(FREERTOS_SOURCE_DIR)/portable/GCC/RISCV \
 				$(FREERTOS_SOURCE_DIR)/include \
-				$(SPIKE_DIR)/conf \
-				$(SPIKE_DIR)/arch \
+				$(TARGET_DIR)/conf \
+				$(TARGET_DIR)/arch \
+				$(TARGET_DIR)/arch/drivers/CoreGPIO \
+				$(TARGET_DIR)/arch/drivers/CoreUARTapb \
+				$(TARGET_DIR)/arch/drivers/CoreTimer \
+				$(TARGET_DIR)/arch/drivers_sifive \
+				$(TARGET_DIR)/arch/hal \
 				$(COMMON_DIR)/include
 
 BUILD_DIRS  = $(sort $(addprefix $(BUILD_DIR)/,$(dir $(OBJS))) $(BUILD_DIR)/)
