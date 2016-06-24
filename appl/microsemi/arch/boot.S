@@ -142,7 +142,7 @@ _mstart:
 
 
   # initialize stack pointer
-  la sp, stack_top
+  la sp, _stack
 
 	j	vSyscallInit
 

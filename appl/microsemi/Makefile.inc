@@ -80,13 +80,14 @@ PORT_ASM = $(FREERTOS_SOURCE_DIR)/portable/GCC/RISCV/portasm.S
 APP_SRC = $(SRC_DIR)/main.c \
 	$(SRC_DIR)/freertos_hooks.c \
 	$(SRC_DIR)/cmd_handler.c \
-	$(TARGET_DIR)/serial.c \
-	$(TARGET_DIR)/syscall.c \
-	$(TARGET_DIR)/drivers/CoreUARTapb/core_uart_apb.c \
-	$(TARGET_DIR)/drivers/CoreGPIO/core_gpio.c \
-	$(TARGET_DIR)/drivers/CoreTimer/core_timer.c \
-	$(TARGET_DIR)/drivers_sifive/plic.c \
-	$(TARGET_DIR)/hal/hw_reg_access.c 
+	$(TARGET_DIR)/arch/serial.c \
+	$(TARGET_DIR)/arch/clib.c \
+	$(TARGET_DIR)/arch/syscalls.c \
+	$(TARGET_DIR)/arch/drivers/CoreUARTapb/core_uart_apb.c \
+	$(TARGET_DIR)/arch/drivers/CoreGPIO/core_gpio.c \
+	$(TARGET_DIR)/arch/drivers/CoreTimer/core_timer.c \
+	$(TARGET_DIR)/arch/drivers_sifive/plic.c \
+	$(TARGET_DIR)/arch/hal/hw_reg_access.c 
 
 # support files
 ASM_SOURCES =$(TARGET_DIR)/arch/boot.S $(PORT_ASM)

@@ -78,14 +78,14 @@ PORT_ASM = $(FREERTOS_SOURCE_DIR)/portable/GCC/RISCV/portasm.S
 
 # application
 APP_SRC = $(SRC_DIR)/main.c \
-	$(SPIKE_DIR)/arch/clib.c \
-	$(SPIKE_DIR)/arch/syscalls.c \
-	$(SPIKE_DIR)/serial.c \
+	$(TARGET_DIR)/arch/clib.c \
+	$(TARGET_DIR)/arch/syscalls.c \
+	$(TARGET_DIR)/arch/serial.c \
 	$(SRC_DIR)/freertos_hooks.c \
 	$(SRC_DIR)/cmd_handler.c
 
 # support files
-ASM_SOURCES =$(SPIKE_DIR)/arch/boot.S $(PORT_ASM)
+ASM_SOURCES =$(TARGET_DIR)/arch/boot.S $(PORT_ASM)
 C_SOURCES 	= $(FREERTOS_SRC) $(PORT_SRC) $(APP_SRC)
 
 LIBS 		=
@@ -95,8 +95,8 @@ INCLUDE_DIRS = 	src $(RISCV)/include/spike \
 				$(FREERTOS_SOURCE_DIR) \
 				$(FREERTOS_SOURCE_DIR)/portable/GCC/RISCV \
 				$(FREERTOS_SOURCE_DIR)/include \
-				$(SPIKE_DIR)/conf \
-				$(SPIKE_DIR)/arch \
+				$(TARGET_DIR)/conf \
+				$(TARGET_DIR)/arch \
 				$(COMMON_DIR)/include
 
 BUILD_DIRS  = $(sort $(addprefix $(BUILD_DIR)/,$(dir $(OBJS))) $(BUILD_DIR)/)
