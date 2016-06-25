@@ -29,10 +29,12 @@ RISCV 	= /usr/local/riscv32
 CROSS	= riscv32-unknown-elf
 ISA		= RV32IM 
 
+TARGET_DIR		= spike
 SPIKE_DIR 		= spike
-BUILD_DIR 		= spike/work
+BUILD_DIR 		= $(TARGET_DIR)/work
 SRC_DIR 		= src
 COMMON_DIR 		= common
+
 
 CONFIG			= Makefile
 
@@ -111,9 +113,9 @@ OBJS 		= $(ASM_SOURCES:.S=.o) $(C_SOURCES:.c=.o)
     ############################################################################
 .PHONY: clean all code binary run
 
-all: $(TARGET).elf $(TARGET).dump
+all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).dump
 
-run: $(TARGET).elf $(TARGET).dump 
+run: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).dump
 	@$(call print_cmd_info,"RUNNING SPIKE",$@)
 	@spike --isa=RV32IM  $(BUILD_DIR)/$(TARGET).elf 
 
@@ -124,6 +126,8 @@ clean:
 
 test:
 	echo $(BUILD_DIRS)
+
+
 
 ################################################################################
 #### Environment setup
@@ -211,23 +215,23 @@ $(BUILD_DIR)/%.d: %.S $(CONFIG) | $(BUILD_DIRS)
 
 %.elf: $(OBJS) $(LIBS) $(CONFIG) $(LINK_FILE) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"LINKING",$@)
-	@$(CC) $(LFLAGS) -Wl,-T -Wl,$(LINK_FILE) -Wl,-Map=$(BUILD_DIR)/$(*).map $(OBJS:%=$(BUILD_DIR)/%) $(LIBS) $(STD_LIBS:%=-l%) -o $(BUILD_DIR)/$(@)
+	@$(CC) $(LFLAGS) -Wl,-T -Wl,$(LINK_FILE) -Wl,-Map=$(BUILD_DIR)/$(*F).map $(OBJS:%=$(BUILD_DIR)/%) $(LIBS) $(STD_LIBS:%=-l%) -o $(BUILD_DIR)/$(@F)
 
 %.hex: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN HEX",$@)
-	@$(OBJCOPY) -O ihex $(BUILD_DIR)/$(<) $(BUILD_DIR)/$(@)
+	@$(OBJCOPY) -O ihex $(BUILD_DIR)/$(<F) $(BUILD_DIR)/$(@F)
 
 %.nm: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN NM",$@)
-	@$(NM) $(BUILD_DIR)/$(<) > $(BUILD_DIR)/$(@)
+	@$(NM) $(BUILD_DIR)/$(<F) > $(BUILD_DIR)/$(@F)
 
 %.srec: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN HEX",$@)
-	@$(OBJCOPY) -O srec $(BUILD_DIR)/$(<) $(BUILD_DIR)/$(@)
+	@$(OBJCOPY) -O srec $(BUILD_DIR)/$(<F) $(BUILD_DIR)/$(@F)
 
 %.bin: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN BIN",$@)
-	@$(OBJCOPY) -O binary $(BUILD_DIR)/$(<) $(BUILD_DIR)/$(@)
+	@$(OBJCOPY) -O binary $(BUILD_DIR)/$(<F) $(BUILD_DIR)/$(@F)
 
 #%.nm: %.elf $(BUILD_DIR_DEP) $(CONFIG)
 #	@$(call print_cmd_info,"GEN NM",$@)
