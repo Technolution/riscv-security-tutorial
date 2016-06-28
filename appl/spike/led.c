@@ -14,52 +14,28 @@
                                                         ++++++++++++++|
                                                                  +++++|
  */
-/*
- *
- */
 
-/* Kernel includes. */
-#include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
-#include "timers.h"
-
-/* Common demo includes. */
-#include "cmd_handler.h"
 #include "led.h"
-#include "tunnel.h"
 
-#include "freertos_hooks.h"
-
-/* RISCV includes */
-#include "syscalls.h"
+#include "FreeRTOS.h"
 #include "clib.h"
 
+int led_pipe;
+int led_state[4] = {0, 0, 0, 0};
 
-/* A block time of zero simply means "don't block". */
-#define mainDONT_BLOCK						( 0UL )
-
-/*-----------------------------------------------------------*/
-extern int systrap;
-extern int systrapval;
-
-int main( void ){
-	dbprintf("start main\n"); 
-
-	initLeds();
-
-	dbprintf("\nFree heapsize %d\n", xPortGetFreeHeapSize());
-	dbprintf("\nFree heapsize %d\n", xPortGetFreeHeapSize());
-	
-	/* create the tasks */
-	InitCmdHandlerTask();
-	InitTunnelTask();
-
-	/* Start the kernel.  From here on, only tasks and interrupts will run. */
-	dbprintf("Free heapsize %d\n", xPortGetFreeHeapSize());
-	vTaskStartScheduler();
-
-	/* Exit FreeRTOS */
-	return 0;
+void initLeds(void) {
+	led_pipe = open("run/spike/ld_pipe", O_WRONLY | O_NONBLOCK, 0);
+	dbprintf("ld_pipe = 0x%08x\n", led_pipe);
 }
 
+void setLed(int index, int state) {
+	//dbprintf("Setting led %d to %d\n", index, state);
+
+	led_state[index] = state;
+}
+
+void writeLeds(void) {
+	char writeBuffer[100];
+	sprintf(writeBuffer, "%d%d%d%d", led_state[0], led_state[1], led_state[2], led_state[3]);
+	write(led_pipe, writeBuffer, sizeof(writeBuffer));
+}

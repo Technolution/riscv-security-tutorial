@@ -83,8 +83,10 @@ APP_SRC = $(SRC_DIR)/main.c \
 	$(TARGET_DIR)/arch/clib.c \
 	$(TARGET_DIR)/arch/syscalls.c \
 	$(TARGET_DIR)/arch/serial.c \
+	$(TARGET_DIR)/led.c \
 	$(SRC_DIR)/freertos_hooks.c \
-	$(SRC_DIR)/cmd_handler.c
+	$(SRC_DIR)/cmd_handler.c \
+	$(SRC_DIR)/tunnel.c
 
 # support files
 ASM_SOURCES =$(TARGET_DIR)/arch/boot.S $(PORT_ASM)
@@ -97,6 +99,7 @@ INCLUDE_DIRS = 	src $(RISCV)/include/spike \
 				$(FREERTOS_SOURCE_DIR) \
 				$(FREERTOS_SOURCE_DIR)/portable/GCC/RISCV \
 				$(FREERTOS_SOURCE_DIR)/include \
+				$(TARGET_DIR)/ \
 				$(TARGET_DIR)/conf \
 				$(TARGET_DIR)/arch \
 				$(COMMON_DIR)/include

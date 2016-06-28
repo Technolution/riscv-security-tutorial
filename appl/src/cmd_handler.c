@@ -30,6 +30,8 @@
 #include "cmd_handler.h"
 #include "serial.h"
 
+#include "tunnel.h"
+
 static void vCmdHandlerTask( void *pvParameters );
 
 
@@ -68,10 +70,10 @@ static int ReceiveCmd(char* buf){
         xSerialPutChar(xComPort, buf[idx], 0);
 
         /* handle the hit of an backspace by shifting the idx back */
-/*        if(buf[idx] == '\b'){
+        if(buf[idx] == '\b'){
             idx -= 2;
         }
-*/
+
         /* add a zero terminator on the end of the string, so we can print it for debugging */
         buf[idx + 1] = '\0';
         dbprintf("cmd = '%s', idx = %d\n", buf, idx);
@@ -85,18 +87,20 @@ static int ReceiveCmd(char* buf){
 }    
 
 static void ExecCmd(char *buf){
-    if(!strcmp(buf, "faster")){
-        blink++;
-    } else if (!strcmp(buf, "slower")){
-        blink--;
+    if(!strcmp(buf, "normal")){
+        setGreenTime(2);
+        setWaitTime(2);
+    } else if (!strcmp(buf, "rush")){
+        setGreenTime(6);
+        setWaitTime(2);
     } else if (!strcmp(buf, "stats")){
-        printf("blink speed : %d\n", blink);
+        printf("Green time : %d\n", getGreenTime());
+        printf("Wait time  : %d\n", getWaitTime());
     } else {
         dbprintf("unkown command\n");
         printf("unknown command\n");
     }
 }
-
     
 static void HandleCmd(void){
 	char cmd_str[256];
