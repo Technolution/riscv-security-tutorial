@@ -9,6 +9,8 @@
 #include "core_timer.h"
 #include "plic.h"
 
+#define USE_PLIC 1
+
 #define PLIC_BASE_ADDR         0x40000000UL
 #define COREUARTAPB0_BASE_ADDR 0x70001000UL
 #define COREGPIO_IN_BASE_ADDR     0x70002000UL
@@ -52,12 +54,12 @@ extern UART_instance_t g_uart;
 void write_hex(int fd, uint32_t hex);
 
 /****************************************************************************
- * Baud value to achieve a 57600 baud rate with a 100MHz system clock.
+ * Baud value to achieve a 115200 baud rate with a 83MHz system clock.
  * This value is calculated using the following equation:
  *      BAUD_VALUE = (CLOCK / (16 * BAUD_RATE)) - 1
  *****************************************************************************/
-//#define BAUD_VALUE_57600   106
-#define BAUD_VALUE_57600   53
+#define BAUD_VALUE_57600    89
+#define BAUD_VALUE_115200   44
 
 
 #endif

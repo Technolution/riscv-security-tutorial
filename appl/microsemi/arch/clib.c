@@ -76,9 +76,8 @@
 #include <stdio.h>
 #include <limits.h>
 #include "clib.h"
-#include "syscalls.h"
 
-int serial_putchr(int ch);
+//int write(int fd, void buf, size_t len);
 
 #define static_assert(cond) switch(0) { case 0: case !!(long)(cond): ; }
 
@@ -89,29 +88,32 @@ int serial_putchr(int ch);
 #undef putchar
 int putchar(int ch)
 {
+    return write(1, &ch, 1); 
+/*
 	static char buf[64] __attribute__((aligned(64)));
 	static int buflen = 0;
 
 	buf[buflen++] = ch;
 
 	if (ch == '\n' || buflen == sizeof(buf)) {
-		syscall(SYS_write, 1, (long) buf, buflen, 0, 0);
+		return write(1, buf, buflen);
 		buflen = 0;
 	}
-
+*/
 	return 0;
 }
 
-#undef puts
-int putstr(char* s)
+int puts(const char* s)
 {
+    /*
 	static char buf[64] __attribute__((aligned(64)));
 	
 	strncpy(buf, s, sizeof(buf) - 1);
 	int buflen = strlen(buf);
 
-	return syscall(SYS_write, 1, (long) buf, buflen, 0, 0);
-	return 0;
+	return write(1, buf, buflen);
+	*/
+    return write(1, s, strlen(s));
 }
 
 /*-----------------------------------------------------------*/
@@ -314,75 +316,13 @@ static void vFormatPrintString(void (*putch)(int, void**), void **putdat,
 
 /*-----------------------------------------------------------*/
 
-/* Cause normal process termination  */
-void exit(int code)
-{
-	syscall(SYS_exit, code, 0, 0, 0, 0);
-	for(;;) { }
-}
-
-/*-----------------------------------------------------------*/
-int open(const char* fn, int flags, int mode)
-{
-	static char buf[128] __attribute__((aligned(64)));
-	
-	size_t fn_size = strlen(fn)+1;
-	if(fn_size > sizeof(buf)){
-		return EPERM;
-	}
-	
-	strncpy(buf, fn, sizeof(buf));
-	return syscall(SYS_openat, -100, (long)buf, fn_size, flags, mode);
-}
-
-/*-----------------------------------------------------------*/
-size_t read(int fd, void *buf, size_t count)
-{
-    static char data[128] __attribute__((aligned(64)));
-    int len = MIN(sizeof(data), count);
-
-    size_t cnt = syscall(SYS_read, fd, (long) data, len, 0, 0);
-    memcpy(buf, data, cnt);
-
-    return cnt;
-}
-
-/*-----------------------------------------------------------*/
-size_t write(int fd, void *buf, size_t count)
-{
-    static char data[128] __attribute__((aligned(64)));
-    int len = MIN(sizeof(data), count);
-
-    memcpy(data, buf, len);
-    return syscall(SYS_write, fd, (long) data, len, 0, 0);
-}
-
-/*-----------------------------------------------------------*/
-int unlink(const char *pathname, int flags)
-{
-    static char buf[128] __attribute__((aligned(64)));
-
-    size_t name_size = strlen(pathname) + 1;
-    if(name_size > sizeof(buf)){
-        return EPERM;
-    }
-
-    strncpy(buf, pathname, sizeof(buf));
-
-    return syscall(SYS_unlinkat, -100, (long)buf, name_size, flags, 0);
-}
-/*-----------------------------------------------------------*/
-
-
-/*-----------------------------------------------------------*/
-
 /* formatted output conversion to frontend */
 int printf(const char* fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
 
-	vFormatPrintString((void*) serial_putchr, 0, fmt, ap);
+	vFormatPrintString((void*) putchar, 0, fmt, ap);
 
 	va_end(ap);
 	return 0; // incorrect return value, but who cares, anyway?

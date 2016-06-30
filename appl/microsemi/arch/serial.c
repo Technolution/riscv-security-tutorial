@@ -24,9 +24,8 @@
 
 #include "clib.h"
 #include "serial.h"
+#include "shared.h"
 
-#define RX_FILE  "run/spike/rx_file"
-#define TX_FILE  "run/spike/tx_pipe"
 
 /*-----------------------------------------------------------*/
 static QueueHandle_t xRxQueue;
@@ -39,8 +38,7 @@ static void vSerialTxTask(void *pvParameters);
 /*-----------------------------------------------------------*/
 xComPortHandle xSerialPortInitMinimal(unsigned long ulWantedBaud, unsigned portBASE_TYPE uxQueueLength)
 {
-    (void)ulWantedBaud;
-    
+	
 	/* Create the rx and tx queues. */
 	//dbprintf("\nFree heapsize %d\n", xPortGetFreeHeapSize());
 	xRxQueue = xQueueCreate(uxQueueLength, (unsigned portBASE_TYPE) sizeof(signed char));
@@ -50,9 +48,9 @@ xComPortHandle xSerialPortInitMinimal(unsigned long ulWantedBaud, unsigned portB
     
     /* background task to perform the actual port read & write */   
 	//dbprintf("\nFree heapsize %d\n", xPortGetFreeHeapSize());
-    xTaskCreate(vSerialRxTask, "SerialRxTask", configMINIMAL_STACK_SIZE, NULL, 1, NULL );
+    xTaskCreate(vSerialRxTask, "SerialRxTask", configMINIMAL_STACK_SIZE, NULL, 2, NULL );
 	//dbprintf("\nFree heapsize %d\n", xPortGetFreeHeapSize());
-    xTaskCreate(vSerialTxTask, "SerialTxTask", configMINIMAL_STACK_SIZE, NULL, 1, NULL );
+    xTaskCreate(vSerialTxTask, "SerialTxTask", configMINIMAL_STACK_SIZE, NULL, 2, NULL );
 	//dbprintf("\nFree heapsize %d\n", xPortGetFreeHeapSize());
 
     /* we only support one serial port for now */
@@ -111,40 +109,29 @@ static void vSerialRxTask(void *pvParameters)
 	/* open the rx channel from the host system in the simulator
 	 * note that this will block until a writer has sent data to the pipe
 	 */
-    
-    static char cRxChar[16] __attribute__((aligned(64)));
+    #define MAX_RX_DATA_SIZE 256
+    uint8_t rx_data[MAX_RX_DATA_SIZE] = {0};
     for(;;){
-        vTaskDelay(100);
-        int rx_file = open(RX_FILE, O_RDONLY | O_NONBLOCK, 0);
-        if(rx_file > 0){
-            int len = 0;
-            do{
-                len = read(rx_file, cRxChar, sizeof(cRxChar));
-                for(int i = 0; i < len; i++){
-                    char c = cRxChar[i];
-                    if(xQueueSend(xRxQueue, &c, portMAX_DELAY) != pdPASS){
-                        dbprintf("error putting rx value in queue\n");
-                    }
-                }
-            }while(len > 0);
-            unlink(RX_FILE, 0);
-        }
+        uint8_t rx_size = UART_get_rx( &g_uart, rx_data, sizeof(rx_data) );
+		for(int i = 0;i < rx_size;){
+			if(xQueueSend(xRxQueue, &rx_data[i],1000) == pdPASS){
+				i++;
+			}
+		}
+		if(rx_size == 0){
+	        vTaskDelay(10);
+		}
     }
 }
 
 static void vSerialTxTask(void *pvParameters)
 {   
     (void)pvParameters;
-    dbprintf("t0\n");
-   	/* open the tx channel from the host system in the simulator
-	 * note that this will block until a reader is connected to the pipe
-	 */
-	int tx_pipe = open(TX_FILE, O_WRONLY | O_NONBLOCK, 0);
 
     char cOutChar __attribute__((aligned(64))) = 0;
     for(;;){
        if(xQueueReceive(xTxQueue, &cOutChar, 1000) == pdPASS){
-            write(tx_pipe, &cOutChar, 1);
+		    UART_send(&g_uart, (const uint8_t *)&cOutChar, 1);
         }
     }
 }

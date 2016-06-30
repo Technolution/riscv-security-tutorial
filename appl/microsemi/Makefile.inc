@@ -23,13 +23,12 @@
 ## Global
 ################################################################################
 
-# Root of RISC-V tools installation. Note that we expect to find the spike
-# simulator header files here under $(RISCV)/include/spike .
-RISCV 	= /usr/local/riscv32
+# Root of RISC-V tools installation. 
+RISCV 	= ~/maarten-tmp/toolchain32
 CROSS	= riscv32-unknown-elf
 ISA		= RV32IM 
 
-TARGET_DIR 	= microsemi
+TARGET_DIR 	    = microsemi
 BUILD_DIR 		= $(TARGET_DIR)/work
 SRC_DIR 		= src
 COMMON_DIR 		= common
@@ -54,8 +53,8 @@ WFLAGS = -Wall -Wextra -Wshadow -Wpointer-arith -Wbad-function-cast \
 DBG_FLAGS = -O0
 
 AFLAGS =  -march=$(ISA) $(WFLAGS) $(DBG_FLAGS) -x assembler-with-cpp -c
-CFLAGS =  -march=$(ISA) $(WFLAGS) $(DBG_FLAGS) -c
-LFLAGS =  -march=$(ISA) -nostartfiles -static
+CFLAGS =  -march=$(ISA) -fno-common -fno-jump-tables $(WFLAGS) $(DBG_FLAGS) -c
+LFLAGS =  -march=$(ISA) -nostdlib -nostartfiles
 
 AFLAGS += -fno-strict-aliasing -fno-builtin -D__gracefulExit
 CFLAGS += -fomit-frame-pointer -fno-strict-aliasing -fno-builtin \
@@ -73,16 +72,18 @@ FREERTOS_SRC = \
 	$(FREERTOS_SOURCE_DIR)/event_groups.c \
 	$(FREERTOS_SOURCE_DIR)/portable/MemMang/heap_2.c 
 	
-PORT_SRC = $(FREERTOS_SOURCE_DIR)/portable/GCC/RISCV/port.c
-PORT_ASM = $(FREERTOS_SOURCE_DIR)/portable/GCC/RISCV/portasm.S
+PORT_SRC = $(FREERTOS_SOURCE_DIR)/portable/GCC/RISCV-MICRO/port.c
+PORT_ASM = $(FREERTOS_SOURCE_DIR)/portable/GCC/RISCV-MICRO/portasm.S
 
 # application
 APP_SRC = $(SRC_DIR)/main.c \
-	$(SRC_DIR)/freertos_hooks.c \
 	$(SRC_DIR)/cmd_handler.c \
+	$(SRC_DIR)/freertos_hooks.c \
+	$(TARGET_DIR)/arch/hardware.c \
 	$(TARGET_DIR)/arch/serial.c \
 	$(TARGET_DIR)/arch/clib.c \
-	$(TARGET_DIR)/arch/syscalls.c \
+	$(TARGET_DIR)/arch/syscall.c \
+	$(TARGET_DIR)/arch/init.c \
 	$(TARGET_DIR)/arch/drivers/CoreUARTapb/core_uart_apb.c \
 	$(TARGET_DIR)/arch/drivers/CoreGPIO/core_gpio.c \
 	$(TARGET_DIR)/arch/drivers/CoreTimer/core_timer.c \
@@ -90,15 +91,15 @@ APP_SRC = $(SRC_DIR)/main.c \
 	$(TARGET_DIR)/arch/hal/hw_reg_access.c 
 
 # support files
-ASM_SOURCES =$(TARGET_DIR)/arch/boot.S $(PORT_ASM)
+ASM_SOURCES = $(TARGET_DIR)/arch/entry.S $(PORT_ASM)
 C_SOURCES 	= $(FREERTOS_SRC) $(PORT_SRC) $(APP_SRC)
 
-LIBS 		=
-STD_LIBS	= c
+LIBS 		= 
+STD_LIBS	= -lc -lgcc
 
 INCLUDE_DIRS = 	src $(RISCV)/include/spike \
 				$(FREERTOS_SOURCE_DIR) \
-				$(FREERTOS_SOURCE_DIR)/portable/GCC/RISCV \
+				$(FREERTOS_SOURCE_DIR)/portable/GCC/RISCV-MICRO \
 				$(FREERTOS_SOURCE_DIR)/include \
 				$(TARGET_DIR)/conf \
 				$(TARGET_DIR)/arch \
@@ -121,7 +122,7 @@ OBJS 		= $(ASM_SOURCES:.S=.o) $(C_SOURCES:.c=.o)
     ############################################################################
 .PHONY: clean all code binary run
 
-all: $(TARGET).elf  $(TARGET).hex $(TARGET).dump
+all: $(TARGET).elf  $(TARGET).ihx $(TARGET).srec $(TARGET).dump
 
 clean: 
 	@$(call print_cmd_info,"CLEANUP",$@)
@@ -217,11 +218,15 @@ $(BUILD_DIR)/%.d: %.S $(CONFIG) | $(BUILD_DIRS)
 
 %.elf: $(OBJS) $(LIBS) $(CONFIG) $(LINK_FILE) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"LINKING",$@)
-	@$(CC) $(LFLAGS) -Wl,-T -Wl,$(LINK_FILE) -Wl,-Map=$(BUILD_DIR)/$(*).map $(OBJS:%=$(BUILD_DIR)/%) $(LIBS) $(STD_LIBS:%=-l%) -o $(BUILD_DIR)/$(@)
+	@$(CC) $(LFLAGS) -Wl,-T -Wl,$(LINK_FILE) -Wl,-Map=$(BUILD_DIR)/$(*).map $(OBJS:%=$(BUILD_DIR)/%) $(LIBS)  $(STD_LIBS) -o $(BUILD_DIR)/$(@)
 
 %.hex: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN HEX",$@)
-	@$(OBJCOPY) -O ihex $(<) $(BUILD_DIR)/$(@)
+	@$(OBJCOPY) -O ihex $(BUILD_DIR)/$(<F) $(BUILD_DIR)/$(@F)
+	
+%.ihx: %.hex $(CONFIG) | $(BUILD_DIRS)
+	@$(call print_cmd_info,"GEN HEX",$@)
+	@tail -n +2 $(BUILD_DIR)/$(<F) > $(BUILD_DIR)/$(@F)
 
 %.nm: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN NM",$@)
