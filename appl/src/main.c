@@ -32,7 +32,6 @@
 #include "freertos_hooks.h"
 
 /* RISCV includes */
-#include "syscalls.h"
 #include "clib.h"
 
 
