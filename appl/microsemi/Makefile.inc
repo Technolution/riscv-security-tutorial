@@ -218,27 +218,27 @@ $(BUILD_DIR)/%.d: %.S $(CONFIG) | $(BUILD_DIRS)
 
 %.elf: $(OBJS) $(LIBS) $(CONFIG) $(LINK_FILE) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"LINKING",$@)
-	@$(CC) $(LFLAGS) -Wl,-T -Wl,$(LINK_FILE) -Wl,-Map=$(BUILD_DIR)/$(*).map $(OBJS:%=$(BUILD_DIR)/%) $(LIBS)  $(STD_LIBS) -o $(BUILD_DIR)/$(@)
+	@$(CC) $(LFLAGS) -Wl,-T -Wl,$(LINK_FILE) -Wl,-Map=$(BUILD_DIR)/$(*F).map $(OBJS:%=$(BUILD_DIR)/%) $(LIBS)  $(STD_LIBS) -o $(BUILD_DIR)/$(@)
 
 %.hex: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN HEX",$@)
 	@$(OBJCOPY) -O ihex $(BUILD_DIR)/$(<F) $(BUILD_DIR)/$(@F)
-	
+
 %.ihx: %.hex $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN HEX",$@)
 	@tail -n +2 $(BUILD_DIR)/$(<F) > $(BUILD_DIR)/$(@F)
 
 %.nm: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN NM",$@)
-	@$(NM) $(BUILD_DIR)/$(<) > $(BUILD_DIR)/$(@)
+	@$(NM) $(BUILD_DIR)/$(<F) > $(BUILD_DIR)/$(@F)
 
 %.srec: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN HEX",$@)
-	@$(OBJCOPY) -O srec $(BUILD_DIR)/$(<) $(BUILD_DIR)/$(@)
+	@$(OBJCOPY) -O srec $(BUILD_DIR)/$(<F) $(BUILD_DIR)/$(@F)
 
 %.bin: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN BIN",$@)
-	@$(OBJCOPY) -O binary $(BUILD_DIR)/$(<) $(BUILD_DIR)/$(@)
+	@$(OBJCOPY) -O binary $(BUILD_DIR)/$(<F) $(BUILD_DIR)/$(@F)
 
 #%.nm: %.elf $(BUILD_DIR_DEP) $(CONFIG)
 #	@$(call print_cmd_info,"GEN NM",$@)
