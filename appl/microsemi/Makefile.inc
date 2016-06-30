@@ -79,7 +79,8 @@ PORT_ASM = $(FREERTOS_SOURCE_DIR)/portable/GCC/RISCV-MICRO/portasm.S
 APP_SRC = $(SRC_DIR)/main.c \
 	$(SRC_DIR)/cmd_handler.c \
 	$(SRC_DIR)/freertos_hooks.c \
-	$(TARGET_DIR)/arch/hardware.c \
+	$(SRC_DIR)/tunnel.c \
+	$(TARGET_DIR)/arch/led.c \
 	$(TARGET_DIR)/arch/serial.c \
 	$(TARGET_DIR)/arch/clib.c \
 	$(TARGET_DIR)/arch/syscall.c \
@@ -225,7 +226,7 @@ $(BUILD_DIR)/%.d: %.S $(CONFIG) | $(BUILD_DIRS)
 	@$(OBJCOPY) -O ihex $(BUILD_DIR)/$(<F) $(BUILD_DIR)/$(@F)
 
 %.ihx: %.hex $(CONFIG) | $(BUILD_DIRS)
-	@$(call print_cmd_info,"GEN HEX",$@)
+	@$(call print_cmd_info,"GEN IHX",$@)
 	@tail -n +2 $(BUILD_DIR)/$(<F) > $(BUILD_DIR)/$(@F)
 
 %.nm: %.elf $(CONFIG) | $(BUILD_DIRS)
