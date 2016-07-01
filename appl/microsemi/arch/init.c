@@ -20,7 +20,8 @@ uintptr_t handle_trap(uintptr_t mcause, uintptr_t epc)
 #endif
   }    
   else{
-    write(1, "trap\n", 5);
+	write(1, "trap\n", 5);
+	printf("mcause : 0x%08x\nepc    : 0x%08x\n", mcause, epc);
     _exit(1 + epc);
   }
   return epc;

@@ -95,12 +95,13 @@ init_data:
     
     
     /* initialize stack pointer */
-    la sp, stack_top
+    la sp, _stack
 
     j	_init
     
 /** fill_block
- * fills the memery from start_address to end_address with a value
+ * fills the memery from start_address to end_address
+ * with a value. Asumes (start < end)
  *
  * a0 - start address
  * a1 - end address
@@ -109,15 +110,13 @@ init_data:
  */
 fill_block:
     sw      a2, 0(a0)
-    bgeu    a0, a1, fb_end
     addi    a0, a0, 4
-    j       fill_block
-fb_end:
+    blt     a0, a1, fill_block
     ret    
     
 /** copy block
  * copies data segments word by word
- * assumes blocks are word aligned
+ * assumes blocks are word aligned (asumes start < end)
  *
  * a0 - dest start address
  * a1 - dest end address
@@ -129,7 +128,7 @@ copy_block:
     sw      t0, 0(a0)
     addi    a0, a0, 4
     addi    a2, a2, 4
-    bne     a0, a1, fill_block
+    blt     a0, a1, copy_block
     ret
 
 /* When trap is an interrupt, this function is called */
@@ -237,11 +236,12 @@ return_trap:
   addi sp, sp, 32*REGBYTES
   mret
 	
-	
+/*
   .bss
   .align 4
 	stack_bottom:
 	  .skip STACK_SIZE
 	stack_top:
+*/
 #endif
      

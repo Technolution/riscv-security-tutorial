@@ -26,6 +26,7 @@
 #include "serial.h"
 #include "shared.h"
 
+#define MAX_RX_DATA_SIZE 256
 
 /*-----------------------------------------------------------*/
 static QueueHandle_t xRxQueue;
@@ -38,20 +39,13 @@ static void vSerialTxTask(void *pvParameters);
 /*-----------------------------------------------------------*/
 xComPortHandle xSerialPortInitMinimal(unsigned long ulWantedBaud, unsigned portBASE_TYPE uxQueueLength)
 {
-	
 	/* Create the rx and tx queues. */
-	//dbprintf("\nFree heapsize %d\n", xPortGetFreeHeapSize());
 	xRxQueue = xQueueCreate(uxQueueLength, (unsigned portBASE_TYPE) sizeof(signed char));
-	//dbprintf("\nFree heapsize %d\n", xPortGetFreeHeapSize());
 	xTxQueue = xQueueCreate(uxQueueLength + 1, (unsigned portBASE_TYPE) sizeof(signed char));
-	//dbprintf("\nFree heapsize %d\n", xPortGetFreeHeapSize());
     
     /* background task to perform the actual port read & write */   
-	//dbprintf("\nFree heapsize %d\n", xPortGetFreeHeapSize());
     xTaskCreate(vSerialRxTask, "SerialRxTask", configMINIMAL_STACK_SIZE, NULL, 2, NULL );
-	//dbprintf("\nFree heapsize %d\n", xPortGetFreeHeapSize());
     xTaskCreate(vSerialTxTask, "SerialTxTask", configMINIMAL_STACK_SIZE, NULL, 2, NULL );
-	//dbprintf("\nFree heapsize %d\n", xPortGetFreeHeapSize());
 
     /* we only support one serial port for now */
     return (void *)1;
@@ -106,10 +100,7 @@ void vSerialClose(xComPortHandle xPort)
 static void vSerialRxTask(void *pvParameters)
 {
     (void)pvParameters;
-	/* open the rx channel from the host system in the simulator
-	 * note that this will block until a writer has sent data to the pipe
-	 */
-    #define MAX_RX_DATA_SIZE 256
+
     uint8_t rx_data[MAX_RX_DATA_SIZE] = {0};
     for(;;){
         uint8_t rx_size = UART_get_rx( &g_uart, rx_data, sizeof(rx_data) );
@@ -128,7 +119,7 @@ static void vSerialTxTask(void *pvParameters)
 {   
     (void)pvParameters;
 
-    char cOutChar __attribute__((aligned(64))) = 0;
+    char cOutChar = 0;
     for(;;){
        if(xQueueReceive(xTxQueue, &cOutChar, 1000) == pdPASS){
 		    UART_send(&g_uart, (const uint8_t *)&cOutChar, 1);
