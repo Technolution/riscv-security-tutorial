@@ -123,7 +123,7 @@ OBJS 		= $(ASM_SOURCES:.S=.o) $(C_SOURCES:.c=.o)
     ############################################################################
 .PHONY: clean all code binary run
 
-all: $(TARGET).elf  $(TARGET).ihx $(TARGET).srec $(TARGET).dump
+all: $(TARGET).elf  $(TARGET).ihx $(TARGET).nm $(TARGET).dump
 
 clean: 
 	@$(call print_cmd_info,"CLEANUP",$@)
@@ -240,14 +240,6 @@ $(BUILD_DIR)/%.d: %.S $(CONFIG) | $(BUILD_DIRS)
 %.bin: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN BIN",$@)
 	@$(OBJCOPY) -O binary $(BUILD_DIR)/$(<F) $(BUILD_DIR)/$(@F)
-
-#%.nm: %.elf $(BUILD_DIR_DEP) $(CONFIG)
-#	@$(call print_cmd_info,"GEN NM",$@)
-#	@$(NM) $(BUILD_DIR)/$(<F) > $(BUILD_DIR)/$(@F)
-
-#%.srec: %.elf $(BUILD_DIR_DEP) $(CONFIG)
-#	@$(call print_cmd_info,"GEN HEX",$@)
-#	@$(OBJCOPY) -O srec $(BUILD_DIR)/$(<F) $(BUILD_DIR)/$(@F)
 
 %.dump: %.elf $(BUILD_DIR_DEP) $(CONFIG)
 	@$(call print_cmd_info,"GEN DUMP",$@)
