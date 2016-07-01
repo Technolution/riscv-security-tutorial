@@ -15,10 +15,10 @@
                                                                  +++++|
  */
 
-void setGreenTime(int newVal);
-void setWaitTime(int newVal);
+void setGreenTimeMs(int newVal);
+void setWaitTimeMs(int newVal);
 
-int getGreenTime(void);
-int getWaitTime(void);
+int getGreenTimeMs(void);
+int getWaitTimeMs(void);
 
 void InitTunnelTask(void);

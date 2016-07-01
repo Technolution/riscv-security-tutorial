@@ -73,11 +73,12 @@ static int ReceiveCmd(char* buf){
         if(buf[idx] == '\b'){
             idx -= 2;
         }
-
-        /* add a zero terminator on the end of the string, so we can print it for debugging */
-        buf[idx + 1] = '\0';
-        dbprintf("cmd = '%s', idx = %d\n", buf, idx);
     }while((buf[idx] != '\n') && (buf[idx] != '\r'));
+
+    /* send a '\r' when we exited on a '\n */
+    if(buf[idx] == '\n'){
+        xSerialPutChar(xComPort, '\r', 0);
+    }
 
     /* return the command string without the new line, so we have only the command */
     buf[idx] = '\0';
@@ -88,17 +89,25 @@ static int ReceiveCmd(char* buf){
 
 static void ExecCmd(char *buf){
     if(!strcmp(buf, "normal")){
-        setGreenTime(2);
-        setWaitTime(2);
+        setGreenTimeMs(2000);
+        setWaitTimeMs(2000);
     } else if (!strcmp(buf, "rush")){
-        setGreenTime(6);
-        setWaitTime(2);
+        setGreenTimeMs(6000);
+        setWaitTimeMs(2000);
     } else if (!strcmp(buf, "stats")){
-        printf("Green time : %d\n", getGreenTime());
-        printf("Wait time  : %d\n", getWaitTime());
+        printf("Green time : %d ms\n", getGreenTimeMs());
+        printf("Wait time  : %d ms\n", getWaitTimeMs());
     } else {
-        dbprintf("unkown command\n");
-        printf("unknown command\n");
+        printf("\nunknown command, '%s'\n\n", buf);
+        printf("*************************************************\n");
+        printf("* The following commands are available:\n");
+        printf("* > normal\n");
+        printf("*      use short delays, to optimize waiting times\n");
+        printf("* > rush\n");
+        printf("*      use long delays, to optimize througput during rush hours\n");
+        printf("* > stats\n");
+        printf("*      print current wait time and green wait time\n");
+        printf("*************************************************\n");
     }
 }
     
