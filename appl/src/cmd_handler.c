@@ -16,6 +16,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "clib.h"
@@ -29,8 +30,11 @@
 /* Common demo includes. */
 #include "cmd_handler.h"
 #include "serial.h"
-
+#include "led.h"
 #include "tunnel.h"
+
+
+#define MAX_ARGS (8)
 
 static void vCmdHandlerTask( void *pvParameters );
 
@@ -90,35 +94,92 @@ static int ReceiveCmd(char* buf){
     return idx + 1;
 }    
 
-static void ExecCmd(char *buf){
-    if(!strcmp(buf, "normal")){
+static int SplitCmd(char* buf, int* argc, char* argv[])
+{
+	/* set initial command */
+	*argc = 1;
+	argv[0] = buf;
+
+	/* split args */
+	size_t len = strlen(buf);
+	for(size_t i = 0; i < len; i++){
+		if(buf[i] == ' '){
+			/* end the string at every space */
+			buf[i] = '\0';
+			/* place start of next string in arg buffer */
+			argv[*argc] = &buf[i + 1];
+			(*argc)++;
+		}
+	}
+
+	printf("<splitcmd>\nnr of args %d\n", *argc);
+	for(int j = 0; j < *argc; j++){
+		printf("argv[%d] = '%s'\n", j, argv[j]);
+	}
+
+	return *argc;
+}
+
+static void ExecCmd(int argc, const char* argv[]){
+	(void)argc;
+
+	/* dispatch command */
+    if(!strcmp(argv[0], "normal")){
         setGreenTimeMs(2000);
         setWaitTimeMs(2000);
-    } else if (!strcmp(buf, "rush")){
+    } else if (!strcmp(argv[0], "rush")){
         setGreenTimeMs(6000);
         setWaitTimeMs(2000);
-    } else if (!strcmp(buf, "stats")){
+    } else if (!strcmp(argv[0], "stats")){
         printf("Green time : %d ms\n", getGreenTimeMs());
         printf("Wait time  : %d ms\n", getWaitTimeMs());
-    } else if (!strcmp(buf, "debug")){
+    } else if (!strcmp(argv[0], "leds")){
+    	/* create a running light */
+    	for(int i = 0; i < 8; i++){
+    		setLeds(1 << i, 0);
+    		vTaskDelay(3000 / portTICK_PERIOD_MS);
+    		printf("idx = %d\n", i);
+    	}
+    } else if (!strcmp(argv[0], "debug")){
     	register int *sp asm("sp");
     	extern void *pxCurrentTCB;
 
-    	printf("@cmd_str = 0x%08x\n", (unsigned int)buf);
+    	printf("@cmd_str = 0x%08x\n", (unsigned int)argv[0]);
     	printf("pxCurrentTCB = 0x%08x\n", (unsigned int) pxCurrentTCB);
     	printf("sp = 0x%08x\n", (unsigned int)sp);
-    } else if (!strcmp(buf, "dump")) {
-    	unsigned int i = (unsigned int)buf;
-    	for(;i < (unsigned int)&buf + 300; i += 4){
+    } else if (!strcmp(argv[0], "wleds")){
+    	unsigned long value = strtoul(argv[1], NULL, 16);
+    	writeGpio(value);
+    } else if (!strcmp(argv[0], "dump")) {
+    	unsigned int i = (unsigned int)argv[0];
+    	for(;i < (unsigned int)&argv[0] + 300; i += 4){
     		printf("[0x%08x] = 0x%08x\n", i, *((unsigned int *) i));
     	}
-    } else if (!strcmp(buf, "mdump")) {
-    	mdump(buf, 300);
-    } else if (!strcmp(buf, "fdump")) {
+    } else if (!strcmp(argv[0], "mdump")) {
+    	mdump(argv[0], 300);
+    } else if (!strcmp(argv[0], "fdump")) {
     	extern void *pxCurrentTCB;
     	mdump((void *)((unsigned int)pxCurrentTCB - 1024), 1024 + 256);
+    } else if (!strcmp(argv[0], "ps")){
+    	char buffer[1024];
+    	vTaskList(buffer);
+    	printf(buffer);
+    } else if (!strcmp(argv[0], "suspend")){
+//    	TaskHandle_t handle = xTaskGetHandle(argv[1]);
+//    	if(!handle){
+//    		vTaskSuspend(handle);
+//    	} else {
+//    		printf("task '%s' not found.\n\nUse 'ps' to get an overview of the tasks\n", argv[1]);
+//    	}
+    } else if (!strcmp(argv[0], "resume")){
+//    	TaskHandle_t handle = xTaskGetHandle(argv[1]);
+//    	if(!handle){
+//    		vTaskResume(handle);
+//    	} else {
+//    		printf("task '%s' not found.\n\nUse 'ps' to get an overview of the tasks\n", argv[1]);
+//    	}
     } else {
-        printf("\nunknown command, '%s'\n\n", buf);
+        printf("\nunknown command, '%s'\n\n", argv[0]);
         printf("*************************************************\n");
         printf("* The following commands are available:\n");
         printf("* > normal\n");
@@ -133,10 +194,14 @@ static void ExecCmd(char *buf){
     
 static void HandleCmd(void){
 	char cmd_str[256];
+	char* argv[MAX_ARGS];
+	int argc = 0;
 
+	memset(argv, 0, sizeof(argv));
 	memset(cmd_str, 0, sizeof(cmd_str));
 	ReceiveCmd(cmd_str);
-	ExecCmd(cmd_str);
+	SplitCmd(cmd_str, &argc, argv);
+	ExecCmd(argc, (const char**)argv);
 }
     
 static void vCmdHandlerTask( void *pvParameters ){

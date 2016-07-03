@@ -21,4 +21,6 @@ void setWaitTimeMs(int newVal);
 int getGreenTimeMs(void);
 int getWaitTimeMs(void);
 
+void setTraficLight(int direction, int state);
+
 void InitTunnelTask(void);

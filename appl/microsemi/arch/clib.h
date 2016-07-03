@@ -95,7 +95,7 @@ int dbprintf(const char* fmt, ...);
 int printf(const char* fmt, ...);
 int sprintf(char* str, const char* fmt, ...);
 
-void mdump(void* ptr, int size);
+void mdump(const void* ptr, int size);
 
 
 #endif /* CLIB_H */

@@ -364,7 +364,7 @@ int sprintf(char* str, const char* fmt, ...)
 }
 /*-----------------------------------------------------------*/
 
-void mdump(void* ptr, int size)
+void mdump(const void* ptr, int size)
 {
 	unsigned int start = (unsigned int)ptr;
 	unsigned int end = start + size + (8 * 4);

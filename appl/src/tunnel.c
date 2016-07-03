@@ -37,6 +37,12 @@
 #include "led.h"
 #include "tunnel.h"
 
+#define DIR_EAST	0
+#define DIR_WEST	1
+
+#define STATE_RED	0
+#define STATE_GREEN	1
+
 volatile int greenTimeMs = 2000;
 volatile int waitTimeMs = 2000;
 
@@ -63,32 +69,45 @@ void InitTunnelTask(void) {
 	xTaskCreate(vTunnelTask, "TunnelTask", configMINIMAL_STACK_SIZE, NULL, 1, NULL );
 }
 
+void setTraficLight(int direction, int state)
+{
+	uint32_t value = 0;
+	uint32_t mask = 0;
+	state = state ? 1: 0;
+
+	if(direction == DIR_EAST){
+		mask = ~(LED1 | LED2);
+		value = (state == STATE_GREEN) ? LED1 : LED2;
+	} else {
+		mask = ~(LED3 | LED4);
+		value = (state == STATE_GREEN) ? LED3 : LED4;
+	}
+	setLeds(value, mask);
+}
+
+
 static void vTunnelTask( void *pvParameters ) {
     (void)pvParameters;
 
 	for(;;){
 		/* red light (e.g. no light) for both directions */
-		setLed(0, 0);
-		setLed(2, 0);
-		writeLeds();
+		setTraficLight(DIR_EAST, STATE_RED);
+		setTraficLight(DIR_WEST, STATE_RED);
 		vTaskDelay(waitTimeMs / portTICK_PERIOD_MS);
 
 		/* green light for direction 1 */
-		setLed(0, 1);
-		setLed(2, 0);
-		writeLeds();
+		setTraficLight(DIR_EAST, STATE_GREEN);
+		setTraficLight(DIR_WEST, STATE_RED);
 		vTaskDelay(greenTimeMs / portTICK_PERIOD_MS);
 
 		/*  red light (e.g. no light) for both directions */
-		setLed(0, 0);
-		setLed(2, 0);
-		writeLeds();
+		setTraficLight(DIR_EAST, STATE_RED);
+		setTraficLight(DIR_WEST, STATE_RED);
 		vTaskDelay(waitTimeMs / portTICK_PERIOD_MS);
 
 		/* green light for direction 2 */
-		setLed(0, 0);
-		setLed(2, 1);
-		writeLeds();
+		setTraficLight(DIR_EAST, STATE_RED);
+		setTraficLight(DIR_WEST, STATE_GREEN);
 		vTaskDelay(greenTimeMs / portTICK_PERIOD_MS);
 	}
 }

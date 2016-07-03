@@ -21,6 +21,8 @@
 
 #define CORETIMER1_BASE_ADDR   0x70004000UL
 
+#define GPIO_LED_SHIFT		(8)
+
 /****************************************************************************
  * External Interrupts. Note that these are off-by-one from their pin of 
  * InterruptVector[30:0], because PLIC's DEVICE_0 is unused. 
