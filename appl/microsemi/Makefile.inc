@@ -53,7 +53,7 @@ WFLAGS = -Wall -Wextra -Wshadow -Wpointer-arith -Wbad-function-cast \
 DBG_FLAGS = -O0
 
 AFLAGS =  -march=$(ISA) $(WFLAGS) $(DBG_FLAGS) -x assembler-with-cpp -c
-CFLAGS =  -march=$(ISA) -fno-common -fno-jump-tables $(WFLAGS) $(DBG_FLAGS) -c
+CFLAGS =  -march=$(ISA) -fno-common -fno-inline -fno-jump-tables $(WFLAGS) $(DBG_FLAGS) -c
 LFLAGS =  -march=$(ISA) -nostdlib -nostartfiles
 
 AFLAGS += -fno-strict-aliasing -fno-builtin -D__gracefulExit

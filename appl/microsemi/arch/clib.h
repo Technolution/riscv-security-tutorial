@@ -84,9 +84,9 @@
 void exit(int code);
 int open(const char* fn, int flags, int mode);
 size_t read(int fd, void *buf, size_t count);
-size_t write(int fd, void *buf, size_t count);
+size_t write(int fd, const void *buf, size_t count);
 int putstr(char* s);
-int unlink(const char *pathname, int flags);
+int unlink(const char *pathname);
 
 
 
@@ -94,6 +94,9 @@ int unlink(const char *pathname, int flags);
 int dbprintf(const char* fmt, ...);
 int printf(const char* fmt, ...);
 int sprintf(char* str, const char* fmt, ...);
+
+void mdump(void* ptr, int size);
+
 
 #endif /* CLIB_H */
 

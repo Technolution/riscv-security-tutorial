@@ -32,7 +32,7 @@
 static QueueHandle_t xRxQueue;
 static QueueHandle_t xTxQueue;
 
-static void vSerialRxTask(void *pvParameters);
+//static void vSerialRxTask(void *pvParameters);
 static void vSerialTxTask(void *pvParameters);
 
 
@@ -40,11 +40,11 @@ static void vSerialTxTask(void *pvParameters);
 xComPortHandle xSerialPortInitMinimal(unsigned long ulWantedBaud, unsigned portBASE_TYPE uxQueueLength)
 {
 	/* Create the rx and tx queues. */
-	xRxQueue = xQueueCreate(uxQueueLength, (unsigned portBASE_TYPE) sizeof(signed char));
-	xTxQueue = xQueueCreate(uxQueueLength + 1, (unsigned portBASE_TYPE) sizeof(signed char));
+	xRxQueue = xQueueCreate(uxQueueLength, sizeof(signed char));
+	xTxQueue = xQueueCreate(uxQueueLength, sizeof(signed char));
     
     /* background task to perform the actual port read & write */   
-    xTaskCreate(vSerialRxTask, "SerialRxTask", configMINIMAL_STACK_SIZE, NULL, 2, NULL );
+    //xTaskCreate(vSerialRxTask, "SerialRxTask", configMINIMAL_STACK_SIZE, NULL, 2, NULL );
     xTaskCreate(vSerialTxTask, "SerialTxTask", configMINIMAL_STACK_SIZE, NULL, 2, NULL );
 
     /* we only support one serial port for now */
@@ -97,23 +97,36 @@ void vSerialClose(xComPortHandle xPort)
 /***********************************************************************
  * The two background tasks
  **********************************************************************/
-static void vSerialRxTask(void *pvParameters)
-{
-    (void)pvParameters;
 
+void UartRxRdyHandler(void)
+{
     uint8_t rx_data[MAX_RX_DATA_SIZE] = {0};
-    for(;;){
-        uint8_t rx_size = UART_get_rx( &g_uart, rx_data, sizeof(rx_data) );
-		for(int i = 0;i < rx_size;){
-			if(xQueueSend(xRxQueue, &rx_data[i],1000) == pdPASS){
-				i++;
-			}
-		}
-		if(rx_size == 0){
-	        vTaskDelay(10);
-		}
-    }
+	uint8_t rx_size = 0;
+
+	rx_size = UART_get_rx( &g_uart, rx_data, sizeof(rx_data) );
+	for(int i = 0; i < rx_size; i++){
+		xQueueSendFromISR(xRxQueue, &rx_data[i], NULL);
+	}
 }
+
+
+//static void vSerialRxTask(void *pvParameters)
+//{
+//    (void)pvParameters;
+//
+//    uint8_t rx_data[MAX_RX_DATA_SIZE] = {0};
+//    for(;;){
+//        uint8_t rx_size = UART_get_rx( &g_uart, rx_data, sizeof(rx_data) );
+//		for(int i = 0;i < rx_size;){
+//			if(xQueueSend(xRxQueue, &rx_data[i],1000) == pdPASS){
+//				i++;
+//			}
+//		}
+//		if(rx_size == 0){
+//	        vTaskDelay(10);
+//		}
+//    }
+//}
 
 static void vSerialTxTask(void *pvParameters)
 {   
@@ -121,7 +134,7 @@ static void vSerialTxTask(void *pvParameters)
 
     char cOutChar = 0;
     for(;;){
-       if(xQueueReceive(xTxQueue, &cOutChar, 1000) == pdPASS){
+       if(xQueueReceive(xTxQueue, &cOutChar, 10000) == pdPASS){
 		    UART_send(&g_uart, (const uint8_t *)&cOutChar, 1);
         }
     }

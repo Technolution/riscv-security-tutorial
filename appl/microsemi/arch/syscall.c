@@ -184,9 +184,9 @@ ssize_t write(int fd, const void* ptr, size_t len)
     for (jj = 0; jj < len; jj++){
       
       UART_send(&g_uart, current + jj, 1);
-      if (current[jj] == '\n'){
-        UART_send(&g_uart, "\r", 1);
-      }
+      //if (current[jj] == '\n'){
+        //UART_send(&g_uart, "\r", 1);
+      //}
     }
     return len;
   } 

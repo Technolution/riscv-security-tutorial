@@ -363,3 +363,31 @@ int sprintf(char* str, const char* fmt, ...)
 	return str - str0;
 }
 /*-----------------------------------------------------------*/
+
+void mdump(void* ptr, int size)
+{
+	unsigned int start = (unsigned int)ptr;
+	unsigned int end = start + size + (8 * 4);
+
+	for(unsigned int i = start; i < end; i += (8 * 4)){
+		/* print adress */
+		printf("[0x%08x] = ", i);
+
+		/* print hex */
+		for(unsigned int j = 0; j < 4 * 8; j += 4){
+			printf("%08x ", *((unsigned int *)(i + j)));
+		}
+
+		/* print asci representation */
+		for(int j = 0; j < 4 * 8; j++){
+			char chr = *((char *)(i + j));
+			if(chr >= 32 && chr <= 126){
+				printf("%c", chr);
+			} else {
+				printf(".");
+			}
+		}
+		printf("\n");
+	}
+}
+

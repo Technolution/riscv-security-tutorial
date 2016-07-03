@@ -60,10 +60,7 @@ configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2.  This hook
 function is called if a stack overflow is detected. */
 void vApplicationStackOverflowHook( TaskHandle_t pxTask, char *pcTaskName )
 {
-	( void ) pcTaskName;
-	( void ) pxTask;
-
 	taskDISABLE_INTERRUPTS();
-	printf("STACK overflow - terminate\n");
+	printf("STACK overflow\nTask '%s' [id = %d]\n--> terminate\n", pcTaskName, pxTask);
 	for( ;; );
 }
