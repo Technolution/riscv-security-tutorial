@@ -117,8 +117,8 @@ static void prvTaskExitError( void );
 
 
 static timer_instance_t g_timer0;
-static plic_instance_t g_plic;
 static gpio_instance_t g_gpio1;
+static plic_instance_t g_plic;
 
 typedef void tskTCB;
 extern volatile tskTCB * volatile pxCurrentTCB;
@@ -138,10 +138,9 @@ static void prvSetNextTimerInterrupt(void)
 /* Sets and enable the timer interrupt */
 void vPortSetupTimer(void)
 {
+   PLIC_init(&g_plic, PLIC_BASE_ADDR, PLIC_NUM_SOURCES, PLIC_NUM_PRIORITIES);
    TMR_init(&g_timer0,CORETIMER0_BASE_ADDR,TMR_CONTINUOUS_MODE,PRESCALER_DIV_16,(configTICK_CLOCK_HZ / configTICK_RATE_HZ));
 
-   PLIC_init(&g_plic, PLIC_BASE_ADDR, PLIC_NUM_SOURCES, PLIC_NUM_PRIORITIES);
-   
    GPIO_init(&g_gpio1, COREGPIO_OUT_BASE_ADDR, GPIO_APB_32_BITS_BUS);
    GPIO_config(&g_gpio1, GPIO_0, GPIO_OUTPUT_MODE);
    
@@ -150,7 +149,11 @@ void vPortSetupTimer(void)
    // Enable Timer 0 Interrupt
    PLIC_set_priority(&g_plic, INT_DEVICE_TIMER0, 1);  
    PLIC_enable_interrupt(&g_plic, INT_DEVICE_TIMER0);  
-  
+
+   // enable UART interrupt
+   PLIC_set_priority(&g_plic, INT_DEVICE_URXRDY, 2);
+   PLIC_enable_interrupt(&g_plic, INT_DEVICE_URXRDY);
+
    /* enable global interrupts and machine external interupt */
    write_csr(mip, 0);
    set_csr(mstatus, MSTATUS_MIE);
@@ -222,12 +225,15 @@ StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack, TaskFunction_t px
 
 void vPortSysTickHandler( void )
 {
-    plic_source int_num = PLIC_claim_interrupt(&g_plic);
+    //plic_source int_num = PLIC_claim_interrupt(&g_plic);
+    int cycles;
 
+    //asm volatile ("csrr %0, mcycle" : "=r" (cycles));
     //static state = 0x0;
     //state = ~state;
     //GPIO_set_outputs(&g_gpio1, state);
     //write(1, ".", 1);
+	//printf("[time] = %d, %d ms\n", cycles, cycles / (configCPU_CLOCK_HZ / 1000));
 	//prvSetNextTimerInterrupt();
 
 	/* Increment the RTOS tick. */
@@ -237,17 +243,28 @@ void vPortSysTickHandler( void )
 	}
 
     TMR_clear_int(&g_timer0);
-    PLIC_complete_interrupt(&g_plic, int_num);
+    //PLIC_complete_interrupt(&g_plic, int_num);
    //PLIC_complete_interrupt(&g_plic,int_num);
 }
 /*-----------------------------------------------------------*/
 
-void handle_m_ext_interrupt(){
-  plic_source int_num  = PLIC_claim_interrupt(&g_plic);
+void vPortInterruptHandler(){  plic_source int_num  = PLIC_claim_interrupt(&g_plic);
+
+  switch(int_num){
+  	  case INT_DEVICE_TIMER0: vPortSysTickHandler(); break;
+  	  case INT_DEVICE_URXRDY: UartRxRdyHandler(); break;
+  }
   //write(1, "interrupt nr: ", sizeof("interrupt nr: "));
   //write_hex(1, int_num);
   ////write(1, "\n", 1);
   PLIC_complete_interrupt(&g_plic, int_num);
+}
 
+
+/* Programs need to override this function. */
+int __attribute__((weak)) UartRxRdyHandler(void)
+{
+	printf("[UART_RXXRDY] implement handler!\n");
+	return;
 }
 

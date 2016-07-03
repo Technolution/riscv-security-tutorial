@@ -85,7 +85,7 @@
 
 .global portSAVE_CONTEXT
 .global portRESTORE_CONTEXT
-.global TIMER_CMP_INT
+.global handle_interrupt
 .global xPortStartScheduler
 .global vPortYield
 .global vTaskIncrementTick
@@ -203,11 +203,12 @@
 	mret
 	.endm
 
-/* Macro for restoring task context */
-TIMER_CMP_INT:
+/* External interrupt handler */
+handle_interrupt:
 	portSAVE_CONTEXT
 	portSAVE_EPC
-	jal	vPortSysTickHandler
+	jal vPortInterruptHandler
+	//jal	vPortSysTickHandler
 	portRESTORE_CONTEXT
 
 xPortStartScheduler:

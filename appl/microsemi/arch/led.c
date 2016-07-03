@@ -42,5 +42,5 @@ void setLed(int index, int state){
 
 void writeLeds(void){
 	GPIO_set_outputs(&g_gpio0,led_state << 8);
-	dbprintf("writeLeds %x\n", led_state);
+	//dbprintf("writeLeds %x\n", led_state);
 }

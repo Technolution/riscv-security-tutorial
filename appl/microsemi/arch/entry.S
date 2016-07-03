@@ -2,7 +2,7 @@
 #define ENTRY_S
 #include "encoding.h"
 
-#define STACK_SIZE ((1 << 12) - 128)
+//#define STACK_SIZE ((1 << 12) - 128)
 #ifdef __riscv64
 # define STORE    sd
 # define LOAD     ld
@@ -81,19 +81,18 @@ _mstart:
 
 init_bss:    
     /* init bss section */
-    la      a0, _bss_start
-    la      a1, _bss_end
+    la      a0, __bss_data_start
+    la      a1, __bss_data_end
     li      a2, 0x0
     jal     fill_block
     
 init_data:    
     /* copy data section from flash */
-    la      a0, _data_start
-    la      a1, _data_end
-    la      a2, _flash_data_start
+    la      a0, __data_start
+    la      a1, __data_end
+    la      a2, __flash_data_start
     jal     copy_block
-    
-    
+
     /* initialize stack pointer */
     la sp, _stack
 
@@ -132,10 +131,23 @@ copy_block:
     ret
 
 /* When trap is an interrupt, this function is called */
-interrupt:
+/** interrupt handler
+ * external interrupt handler
+ *
+ * Note that this interrupt can be caused by the timer interupt.
+ * On the timer interrupt we don't wan't to change the
+ * stack, as we currently in the stack frame of the running
+ * task. The timer interrupt can switch the task, causing
+ * something to be left on the stack that is switched out when
+ * we  For the timer interrupt we
+ */
 
+external_interrupt:
+	/* obtain interrupt source from plic */
+//	jal		is_tick_timer_interrupt	/* check if is a timer interrupt using a c function in init.c */
+//	bnez	a0, TIMER_CMP_INT		/* if it is the timer interrupt, jump to that macro and handle te entire interrupt there */
+//	jal		handle_interrupt
 	mret
-
 
 /* For when a trap is fired */
 trap_entry:
@@ -151,7 +163,7 @@ trap_entry:
   addi	sp, sp, REGBYTES
 
 	/* Interupt is timer interrupt */
-  j		TIMER_CMP_INT
+  j		handle_interrupt			/* jump to the freertos handlling function */
 
 return_trap:
   LOAD	t0, 0x0(sp)
