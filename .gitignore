@@ -4,3 +4,8 @@
 
 appl/spike/work/*
 appl/microsemi/work/*
+
+exploit/work/*
+
+tools/terminal/*.pyc
+
