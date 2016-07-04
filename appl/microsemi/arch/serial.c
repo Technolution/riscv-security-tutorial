@@ -36,7 +36,7 @@
 /******************************************************************************
  * local definitions and variables
  *****************************************************************************/
-#define MAX_RX_DATA_SIZE 256
+#define MAX_RX_DATA_SIZE 128
 
 static QueueHandle_t xRxQueue;
 static QueueHandle_t xTxQueue;
@@ -44,7 +44,7 @@ static QueueHandle_t xTxQueue;
 UART_instance_t g_uart;
 
 static void vSerialTxTask(void *pvParameters);
-void UartRxRdyHandler(void);
+static void vSerialRXTask(void *pvParameters);
 
 /******************************************************************************
  * Exported functions
@@ -71,6 +71,7 @@ xComPortHandle xSerialPortInitMinimal(unsigned long ulWantedBaud, unsigned portB
 
     /* background task to perform the actual port read & write */
     xTaskCreate(vSerialTxTask, "SerialTxTask", configMINIMAL_STACK_SIZE, NULL, 2, NULL);
+    xTaskCreate(vSerialRXTask, "SerialRxTask", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
 
     /* we only support one serial port for now */
     return (void *) 1;
@@ -147,14 +148,16 @@ void vSerialClose(xComPortHandle xPort)
  * Rx unit. Note that this function should always empty the UART fifo,
  * else the interrupt keeps active.
  */
-void UartRxRdyHandler(void)
+static void vSerialRXTask(void *pvParameters)
 {
     uint8_t rx_data[MAX_RX_DATA_SIZE] = { 0 };
     uint8_t rx_size = 0;
 
-    rx_size = UART_get_rx(&g_uart, rx_data, sizeof(rx_data));
-    for(int i = 0; i < rx_size; i++){
-        xQueueSendFromISR(xRxQueue, &rx_data[i], NULL);
+    for(;;){
+		rx_size = UART_get_rx(&g_uart, rx_data, sizeof(rx_data));
+		for(int i = 0; i < rx_size; i++){
+			xQueueSend(xRxQueue, &rx_data[i], NULL);
+		}
     }
 }
 
@@ -165,7 +168,6 @@ void UartRxRdyHandler(void)
 static void vSerialTxTask(void *pvParameters)
 {
     (void) pvParameters;
-
     char cOutChar = 0;
     for(;;){
         if(xQueueReceive(xTxQueue, &cOutChar, 10000) == pdPASS){
