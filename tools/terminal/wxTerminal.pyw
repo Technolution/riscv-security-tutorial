@@ -12,6 +12,7 @@ import threading
 import wx
 import wxSerialConfigDialog
 import os.path
+import re
 
 # ----------------------------------------------------------------------
 # Create an own event type, so that GUI updates can be delegated
@@ -58,7 +59,7 @@ class TerminalSetup:
     def __init__(self):
         self.echo = False
         self.unprintable = False
-        self.newline = NEWLINE_CRLF
+        self.newline = NEWLINE_LF
 
 
 class TerminalSettingsDialog(wx.Dialog):
@@ -298,9 +299,7 @@ class TerminalFrame(wx.Frame):
                 ok = True
 
     def OnUploadBlob(self, event):
-        print "??????????????????"
         defaultDir = "../../exploit/work/" #os.path.abspath("../../exploit/work/")
-        print(">>> default dir: " + defaultDir)
         openFileDialog = wx.FileDialog(self, "Upload file ...", 
                                        defaultDir=defaultDir, defaultFile="exploit.raw", 
                                        wildcard=("Bin files (*.raw)|*.raw|All files (*.*)|*.*"), 
@@ -310,12 +309,9 @@ class TerminalFrame(wx.Frame):
         openFileDialog.Destroy()                          
 
         data = bytearray(open(path, "rb").read())
-        print len(data)
-        #x = self.serial.write(data)
-        #print "written {0}".format(x)
         import time
         for ch in data:
-            time.sleep(0.001)
+            time.sleep(0.025)
             wx.Yield()
             print self.serial.write(chr(ch))
                 
@@ -352,9 +348,26 @@ class TerminalFrame(wx.Frame):
             self.serial.write(char.encode('UTF-8', 'replace'))         # send the character
 
     def WriteText(self, text):
+        # handle backspace (use re to improve speed)
+        apply_bs = re.compile(".\b") # Don't use a raw string here 
+        text = apply_bs.sub("", text)
+
+        while(text != '' and text[0] == '\b'):
+            print "back"
+            self.text_ctrl_output.Remove(self.text_ctrl_output.GetLastPosition()-1, self.text_ctrl_output.GetLastPosition())
+            text = text[1:]
+        
         if self.settings.unprintable:
             text = ''.join([c if (c >= ' ' and c != '\x7f') else unichr(0x2400 + ord(c)) for c in text])
         self.text_ctrl_output.AppendText(text)
+        
+#         for chr in text:
+#             if chr == '\b':
+#                 
+#             else:
+#                 if self.settings.unprintable:
+#                     chr = chr if (chr >= ' ' and c != '\x7f') else unichr(0x2400 + ord(chr))
+#                 self.text_ctrl_output.AppendText(chr)
 
     def OnSerialRead(self, event):
         """Handle input from the serial port."""
