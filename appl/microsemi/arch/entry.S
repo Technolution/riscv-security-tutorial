@@ -1,8 +1,29 @@
-#ifndef ENTRY_S
-#define ENTRY_S
+/*
+  (C) COPYRIGHT 2016 TECHNOLUTION B.V., GOUDA NL and others
+  =======          I                   ==          I    =
+     I             I                    I          I
+|    I   ===   === I ===  I ===   ===   I  I    I ====  I   ===  I ===
+|    I  /   \ I    I/   I I/   I I   I  I  I    I  I    I  I   I I/   I
+|    I  ===== I    I    I I    I I   I  I  I    I  I    I  I   I I    I
+|    I  \     I    I    I I    I I   I  I  I   /I  \    I  I   I I    I
+|    I   ===   === I    I I    I  ===  ===  === I   ==  I   ===  I    I
+|                 +---------------------------------------------------+
++----+            |  +++++++++++++++++++++++++++++++++++++++++++++++++|
+     |            |             ++++++++++++++++++++++++++++++++++++++|
+     +------------+                          +++++++++++++++++++++++++|
+                                                        ++++++++++++++|
+                                                                 +++++|
+ */
+/**
+ * @file
+ * @author  Jonathan Hofman <jonathan.hofman@technolution.nl>
+ *
+ * @brief   This file is based on code examples from diverse RISC-V projects
+ *
+ */
+
 #include "encoding.h"
 
-//#define STACK_SIZE ((1 << 12) - 128)
 #ifdef __riscv64
 # define STORE    sd
 # define LOAD     ld
@@ -34,7 +55,11 @@ nmi_vector:
 trap_vector:
   j trap_entry
  
-/* Startup code */
+/** Startup code (entry point)
+ *
+ * The following code initializes the C environment and calls the C-init
+ * function
+ */
 _mstart:
     li	x1, 0
     li	x2, 0
@@ -130,26 +155,12 @@ copy_block:
     blt     a0, a1, copy_block
     ret
 
-/* When trap is an interrupt, this function is called */
-/** interrupt handler
- * external interrupt handler
+/** trap entry
+ * basic trap handler
  *
- * Note that this interrupt can be caused by the timer interupt.
- * On the timer interrupt we don't wan't to change the
- * stack, as we currently in the stack frame of the running
- * task. The timer interrupt can switch the task, causing
- * something to be left on the stack that is switched out when
- * we  For the timer interrupt we
+ * This function is called when a trap or interrupt is detected and taken
+ * by the processor.
  */
-
-external_interrupt:
-	/* obtain interrupt source from plic */
-//	jal		is_tick_timer_interrupt	/* check if is a timer interrupt using a c function in init.c */
-//	bnez	a0, TIMER_CMP_INT		/* if it is the timer interrupt, jump to that macro and handle te entire interrupt there */
-//	jal		handle_interrupt
-	mret
-
-/* For when a trap is fired */
 trap_entry:
 	/* Check for interrupt */
   addi	sp, sp, -REGBYTES
@@ -247,13 +258,5 @@ return_trap:
 
   addi sp, sp, 32*REGBYTES
   mret
-	
-/*
-  .bss
-  .align 4
-	stack_bottom:
-	  .skip STACK_SIZE
-	stack_top:
-*/
-#endif
+
      

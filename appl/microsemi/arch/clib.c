@@ -75,9 +75,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
-#include "clib.h"
+#include <unistd.h>
 
-//int write(int fd, void buf, size_t len);
+#include "clib.h"
+#include "syscall.h"
 
 #define static_assert(cond) switch(0) { case 0: case !!(long)(cond): ; }
 
@@ -89,30 +90,11 @@
 int putchar(int ch)
 {
     return write(1, &ch, 1); 
-/*
-	static char buf[64] __attribute__((aligned(64)));
-	static int buflen = 0;
-
-	buf[buflen++] = ch;
-
-	if (ch == '\n' || buflen == sizeof(buf)) {
-		return write(1, buf, buflen);
-		buflen = 0;
-	}
-*/
-	return 0;
+    return 0;
 }
 
 int puts(const char* s)
 {
-    /*
-	static char buf[64] __attribute__((aligned(64)));
-	
-	strncpy(buf, s, sizeof(buf) - 1);
-	int buflen = strlen(buf);
-
-	return write(1, buf, buflen);
-	*/
     return write(1, s, strlen(s));
 }
 
@@ -366,28 +348,28 @@ int sprintf(char* str, const char* fmt, ...)
 
 void mdump(const void* ptr, int size)
 {
-	unsigned int start = (unsigned int)ptr;
-	unsigned int end = start + size + (8 * 4);
+    unsigned int start = (unsigned int) ptr;
+    unsigned int end = start + size + (8 * 4);
 
-	for(unsigned int i = start; i < end; i += (8 * 4)){
-		/* print adress */
-		printf("[0x%08x] = ", i);
+    for (unsigned int i = start; i < end; i += (8 * 4)) {
+        /* print adress */
+        printf("[0x%08x] = ", i);
 
-		/* print hex */
-		for(unsigned int j = 0; j < 4 * 8; j += 4){
-			printf("%08x ", *((unsigned int *)(i + j)));
-		}
+        /* print hex */
+        for (unsigned int j = 0; j < 4 * 8; j += 4) {
+            printf("%08x ", *((unsigned int *) (i + j)));
+        }
 
-		/* print asci representation */
-		for(int j = 0; j < 4 * 8; j++){
-			char chr = *((char *)(i + j));
-			if(chr >= 32 && chr <= 126){
-				printf("%c", chr);
-			} else {
-				printf(".");
-			}
-		}
-		printf("\n");
-	}
+        /* print asci representation */
+        for (int j = 0; j < 4 * 8; j++) {
+            char chr = *((char *) (i + j));
+            if (chr >= 32 && chr <= 126) {
+                printf("%c", chr);
+            } else {
+                printf(".");
+            }
+        }
+        printf("\n");
+    }
 }
 

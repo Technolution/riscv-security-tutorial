@@ -1,4 +1,28 @@
-#include <stdlib.h>
+/*
+  (C) COPYRIGHT 2016 TECHNOLUTION B.V., GOUDA NL
+  =======          I                   ==          I    =
+     I             I                    I          I
+|    I   ===   === I ===  I ===   ===   I  I    I ====  I   ===  I ===
+|    I  /   \ I    I/   I I/   I I   I  I  I    I  I    I  I   I I/   I
+|    I  ===== I    I    I I    I I   I  I  I    I  I    I  I   I I    I
+|    I  \     I    I    I I    I I   I  I  I   /I  \    I  I   I I    I
+|    I   ===   === I    I I    I  ===  ===  === I   ==  I   ===  I    I
+|                 +---------------------------------------------------+
++----+            |  +++++++++++++++++++++++++++++++++++++++++++++++++|
+     |            |             ++++++++++++++++++++++++++++++++++++++|
+     +------------+                          +++++++++++++++++++++++++|
+                                                        ++++++++++++++|
+                                                                 +++++|
+ */
+/**
+ * @file
+ * @author  Jonathan Hofman <jonathan.hofman@technolution.nl>
+ *
+ * @brief   C initialezer file. This file contains the startup code that
+ *          is executed after the assambly init is performed. Furthermore,
+ *          it contains the trap handler.
+ */
+
 #include <stddef.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -6,54 +30,51 @@
 #include "encoding.h"
 #include "shared.h"
 #include "FreeRTOS.h"
-
-//#include "clib.h"
+#include "syscall.h"
+#include "clib.h"
 
 extern plic_instance_t g_plic;
-extern uint8_t* ucHeap;
 
 
+#define HEAP_DUMP_ON_TRAP   (0)
+
+uintptr_t handle_trap(uintptr_t mcause, uintptr_t epc);
+void _init(void);
+
+
+/**
+ * Trap handler
+ *
+ * The trap handler is called for all machine traps excluding the
+ * timer and external interrupts. These are handles by a different
+ * function.
+ */
 uintptr_t handle_trap(uintptr_t mcause, uintptr_t epc)
 {
-	write(1, "trap\n", 5);
-	printf("mcause : 0x%08x\nepc    : 0x%08x\n", mcause, epc);
+    write(1, "trap\n", 5); /* use write to ensure it is printed */
+    dbprintf("mcause : 0x%08x\nepc    : 0x%08x\n", mcause, epc);
 
-	mdump(0x80000000, 32 * 1024);
+#if(HEAP_DUMP_ON_TRAP == 1)
+    mdump(0x80000000, 32 * 1024);
+#endif
 
-    _exit(1 + epc);
+    _exit(1);
     return epc;
 }
 
-/*
-void __attribute__ ((naked)) handle_interrupt()
-{
-	printf("interrrupt");
-
-}
-
-
-void is_tick_timer_interrupt()
-{
-	return PLIC_claim_interrupt(&g_plic) == INT_DEVICE_TIMER0;
-}
-
-
-
-void hanlde_interrupt(unsigned int int_id)
-{
-
-}
-
-*/
-
+/**
+ * c initiazation function
+ *
+ * First C function that is called after initializtion. It is called before de C
+ * main is called.
+ */
 void _init(void)
 {
-  UART_init( &g_uart, COREUARTAPB0_BASE_ADDR, BAUD_VALUE_57600, (DATA_8_BITS | NO_PARITY) );
+    UART_init(&g_uart, COREUARTAPB0_BASE_ADDR, BAUD_VALUE_57600, (DATA_8_BITS | NO_PARITY));
 
+    extern int main(int, char**);
+    const char *argv0 = "";
+    char *argv[] = { (char *) argv0, NULL, NULL };
 
-  extern int main(int, char**);
-  const char *argv0 = "hello";
-  char *argv[] = {(char *)argv0, NULL, NULL};
-
-  exit(main(1, argv));
+    exit(main(1, argv));
 }

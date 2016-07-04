@@ -18,31 +18,34 @@
  * @file
  * @author  Jonathan Hofman <jonathan.hofman@technolution.nl>
  *
- * @brief   Simple HAL for driving the LEDs on the SOM060 platform
+ * @brief   This file is based upon diverse low level stubs implementing
+ *          diverse syscalls. The file is made based on numerous examples
+ *          from the RISC-V codebase.
  */
 
-#ifndef LED_H
-#define LED_H
+#ifndef SYSCALL_H
+#define SYSCAL_H
 
-void initLeds(void);
+void write_hex(int fd, uint32_t hex);
+void _exit(int code);
+//void *sbrk(ptrdiff_t incr);
+//static int stub(int err);
+//int open(const char* name, int flags, int mode);
+//int openat(int dirfd, const char* name, int flags, int mode);
+//int close(int fd);
+//int execve(const char* name, char* const argv[], char* const env[]);
+//int fork();
+//int fstat(int fd, struct stat *st);
+//int getpid();
+int isatty(int fd);
+//int kill(int pid, int sig);
+//int link(const char *old_name, const char *new_name);
+///off_t lseek(int fd, off_t ptr, int dir);
+ssize_t read(int fd, void* ptr, size_t len);
+//int stat(const char* file, struct stat* st);
+//clock_t times(struct tms* buf);
+//int unlink(const char* name);
+///int wait(int* status);
+ssize_t write(int fd, const void* ptr, size_t len);
 
-#define LED_SHIFT           (8)
-#define LED_MASK            (0xFFFF00FF)
-#define NORMAL_LED_SHIFT    (11)
-
-#define LED_MULTI_COLOR_B   (1 << 8)
-#define LED_MULTI_COLOR_R   (1 << 9)
-#define LED_MULTI_COLOR_G   (1 << 10)
-
-#define LED1                (1 << 15)
-#define LED2                (1 << 11)
-#define LED3                (1 << 12)
-#define LED4                (1 << 14)
-
-void setLed(int index, int state);
-void setLeds(int state, int mask);
-void writeLeds(void);
-void writeGpio(uint32_t value);
-
-#endif /* LED_H */
-
+#endif

@@ -15,5 +15,10 @@
                                                                  +++++|
  */
 
+#ifndef CMD_HANDLER_H
+#define CMD_HANDLER_H
+
 int serial_putchr(int ch);
 void InitCmdHandlerTask(void);
+
+#endif

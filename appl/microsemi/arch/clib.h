@@ -73,6 +73,8 @@
 #ifndef CLIB_H
 #define CLIB_H
 
+#include <stdint.h>
+
 #define	O_RDONLY	0x0000		/* open for reading only */
 #define	O_WRONLY	0x0001		/* open for writing only */
 #define	O_NONBLOCK	0x0004		/* no delay */
@@ -82,14 +84,9 @@
 //typedef unsigned long size_t;
 
 void exit(int code);
-int open(const char* fn, int flags, int mode);
-size_t read(int fd, void *buf, size_t count);
-size_t write(int fd, const void *buf, size_t count);
+//int open(const char* fn, int flags, int mode);
 int putstr(char* s);
-int unlink(const char *pathname);
-
-
-
+//int unlink(const char *pathname);
 
 int dbprintf(const char* fmt, ...);
 int printf(const char* fmt, ...);

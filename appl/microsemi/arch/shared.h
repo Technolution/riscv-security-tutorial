@@ -11,17 +11,15 @@
 
 #define USE_PLIC 1
 
-#define PLIC_BASE_ADDR         0x40000000UL
-#define COREUARTAPB0_BASE_ADDR 0x70001000UL
-#define COREGPIO_IN_BASE_ADDR     0x70002000UL
-#define COREGPIO_OUT_BASE_ADDR     0x70005000UL
+#define PLIC_BASE_ADDR          0x40000000UL
+#define COREUARTAPB0_BASE_ADDR  0x70001000UL
+#define COREGPIO_IN_BASE_ADDR   0x70002000UL
+#define COREGPIO_OUT_BASE_ADDR  0x70005000UL
 
-#define CORETIMER0_BASE_ADDR   0x70003000UL
+#define CORETIMER0_BASE_ADDR    0x70003000UL
 
 
-#define CORETIMER1_BASE_ADDR   0x70004000UL
-
-#define GPIO_LED_SHIFT		(8)
+#define CORETIMER1_BASE_ADDR    0x70004000UL
 
 /****************************************************************************
  * External Interrupts. Note that these are off-by-one from their pin of 

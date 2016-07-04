@@ -33,7 +33,7 @@ BUILD_DIR 		= $(TARGET_DIR)/work
 SRC_DIR 		= src
 COMMON_DIR 		= common
 
-CONFIG			= Makefile
+CONFIG			= Makefile microsemi/Makefile.inc
 
 ################################################################################
 ## Project variables
@@ -164,6 +164,13 @@ print_cmd_info_nonl	= printf "[%s] - %-20s : %s " `date +%H:%M:%S` $(1) $(2)
 $(BUILD_DIRS)	:
 	@$(call print_cmd_info,"MK WORK DIR",$@)
 	@mkdir -p $@
+
+    ############################################################################
+    ## surpress warnings generated in external provided files
+    ############################################################################
+%/core_uart_apb.o: CFLAGS += -Wno-unused-but-set-variable
+%/plic.o: CFLAGS += -Wno-missing-prototypes -Wno-missing-declarations
+%/hw_reg_access.o: CFLAGS += -Wno-missing-prototypes -Wno-missing-declarations
 
 ################################################################################
 #### RISC-V GCC toolchain
