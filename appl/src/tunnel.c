@@ -80,7 +80,7 @@ int getWaitTimeMs(void)
  */
 void InitTunnelTask(void)
 {
-    xTaskCreate(vTunnelTask, "TunnelTask", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+    xTaskCreate(vTunnelTask, "TunnelTask", configMINIMAL_STACK_SIZE, NULL, 2, NULL);
 }
 
 /******************************************************************************
