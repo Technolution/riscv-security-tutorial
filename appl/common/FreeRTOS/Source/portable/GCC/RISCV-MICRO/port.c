@@ -118,6 +118,7 @@ void vPortInterruptHandler(void);
 void UartRxRdyHandler(void);
 
 static timer_instance_t g_timer0;
+static timer_instance_t g_timer1;
 static gpio_instance_t g_gpio1;
 static plic_instance_t g_plic;
 
@@ -142,14 +143,12 @@ void vPortSetupTimer(void)
    PLIC_set_priority(&g_plic, INT_DEVICE_TIMER0, 1);  
    PLIC_enable_interrupt(&g_plic, INT_DEVICE_TIMER0);  
 
-   // enable UART interrupt
-   PLIC_set_priority(&g_plic, INT_DEVICE_URXRDY, 2);
-   PLIC_enable_interrupt(&g_plic, INT_DEVICE_URXRDY);
+   //PLIC_set_priority(&g_plic, INT_DEVICE_URXRDY, 1);
+   //PLIC_enable_interrupt(&g_plic, INT_DEVICE_URXRDY);
+
 
    /* enable global interrupts and machine external interupt */
    write_csr(mip, 0);
-   set_csr(mstatus, MSTATUS_MIE);
-   set_csr(mstatus, MSTATUS_MPIE);
    set_csr(mie, MIP_MEIP);
 
    /* Start timer */
@@ -217,15 +216,16 @@ StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack, TaskFunction_t px
 
 void vPortSysTickHandler( void )
 {
+
 	/* Increment the RTOS tick. */
 	if( xTaskIncrementTick() != pdFALSE )
 	{
 		vTaskSwitchContext();
 	}
-
-    TMR_clear_int(&g_timer0);
+	TMR_clear_int(&g_timer0);
 }
 /*-----------------------------------------------------------*/
+
 
 void vPortInterruptHandler(void){
   plic_source int_num  = PLIC_claim_interrupt(&g_plic);
@@ -234,7 +234,6 @@ void vPortInterruptHandler(void){
   	  case INT_DEVICE_TIMER0: vPortSysTickHandler(); break;
   	  case INT_DEVICE_URXRDY: UartRxRdyHandler(); break;
   }
-
   PLIC_complete_interrupt(&g_plic, int_num);
 }
 
