@@ -118,7 +118,6 @@ void vPortInterruptHandler(void);
 void UartRxRdyHandler(void);
 
 static timer_instance_t g_timer0;
-static timer_instance_t g_timer1;
 static gpio_instance_t g_gpio1;
 static plic_instance_t g_plic;
 
