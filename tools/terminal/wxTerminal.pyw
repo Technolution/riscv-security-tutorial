@@ -311,9 +311,9 @@ class TerminalFrame(wx.Frame):
         data = bytearray(open(path, "rb").read())
         import time
         for ch in data:
-            time.sleep(0.025)
             wx.Yield()
-            print self.serial.write(chr(ch))
+            self.serial.write(chr(ch))
+        self.serial.write("\n")
                 
     def OnTermSettings(self, event):  # wxGlade: TerminalFrame.<event_handler>
         """\
