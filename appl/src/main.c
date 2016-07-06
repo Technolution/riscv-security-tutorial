@@ -33,6 +33,7 @@
 #include "tunnel.h"
 #include "freertos_hooks.h"
 #include "clib.h"
+#include "blink_pwm.h"
 
 
 /**
@@ -46,6 +47,7 @@ int main( void ){
 	/* create the tasks */
 	InitCmdHandlerTask();
 	InitTunnelTask();
+	vCreateLedTasks();
 
 	/* Start the kernel.  From here on, only tasks and interrupts will run. */
 	vTaskStartScheduler();

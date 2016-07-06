@@ -40,7 +40,7 @@ _HEAP_SIZE = DEFINED(_HEAP_SIZE) ? _HEAP_SIZE : 0;
 MEMORY 
 {
     flash (rx)  : ORIGIN = 0x60020000, LENGTH = 128K
-    ram   (xrw) : ORIGIN = 0x80000000, LENGTH = 32K
+    ram   (xrw) : ORIGIN = 0x80000000, LENGTH = 64K
 }
 
 /* Specify the default entry point to the program */

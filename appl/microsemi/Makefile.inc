@@ -80,6 +80,7 @@ APP_SRC = $(SRC_DIR)/main.c \
 	$(SRC_DIR)/cmd_handler.c \
 	$(SRC_DIR)/freertos_hooks.c \
 	$(SRC_DIR)/tunnel.c \
+	$(SRC_DIR)/blink_pwm.c \
 	$(TARGET_DIR)/arch/led.c \
 	$(TARGET_DIR)/arch/serial.c \
 	$(TARGET_DIR)/arch/clib.c \
