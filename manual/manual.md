@@ -5,7 +5,7 @@ Virtualbox setup
 * Extract virtualbox image.
 * Make sure the programmer is selected as usb device in virtualbox.  Go to Settings > USB > Add USB Filter > Microsemi Embedded FLashPro5.
 
-![Usb-virtualbox](/img/usb-virtualbox.png?raw=true "Usb-virtualbox")
+![Usb-virtualbox](img/usb-virtualbox.png?raw=true "Usb-virtualbox")
 
 Get code
 -----------
@@ -19,7 +19,7 @@ Program FPGA
 * Click New..
 * Select programming job file: riscv-security-tutorial/fpga/sf2_1_full.job
 
-![Settings terminal](/img/settings-terminal.png?raw=true "Settings terminal")
+![Settings terminal](img/settings-terminal.png?raw=true "Settings terminal")
 * Click the large RUN button
 Make FreeRTOS application
 	$ cd riscv-security-tutorial/appl/
@@ -43,7 +43,7 @@ Open serial terminal
 * Select port: /dev/ttyUSB2
 * Leave the other settings as is.
 
-![Settings terminal](/img/settings-terminal.png?raw=true "Settings terminal")
+![Settings terminal](img/settings-terminal.png?raw=true "Settings terminal")
 
 Try application commands
 -----------
@@ -57,10 +57,10 @@ Upload exploit & payload
 * Select riscv-security-tutorial/exploit/work/exploit.raw 
 * See ready4payload
 
-![exploit](/img/exploit.png?raw=true "exploit")
+![exploit](img/exploit.png?raw=true "exploit")
 * Tools > Upload blob..
 * Select riscv-security-tutorial/payload/work/payload.raw
 * See HACKED
 
-![HACKED](/img/hacked.png?raw=true "HACKED")
+![HACKED](img/hacked.png?raw=true "HACKED")
 
