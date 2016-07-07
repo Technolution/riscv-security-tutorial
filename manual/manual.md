@@ -19,7 +19,7 @@ Program FPGA
 * Click New..
 * Select programming job file: riscv-security-tutorial/fpga/sf2_1_full.job
 
-![Settings terminal](img/settings-terminal.png?raw=true "Settings terminal")
+![Settings terminal](img/new-job-flash.png?raw=true "FPExpress programming startup windows")
 * Click the large RUN button
 Make FreeRTOS application
 	$ cd riscv-security-tutorial/appl/
