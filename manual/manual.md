@@ -21,10 +21,14 @@ Program FPGA
 
 ![Settings terminal](img/new-job-flash.png?raw=true "FPExpress programming startup windows")
 * Click the large RUN button
+ 
+You should now see blinking leds on the FPGA. Furthermore, you should already have access to the terminal and see a command prompt.
+
 Make FreeRTOS application
+-------------------------
 	$ cd riscv-security-tutorial/appl/
-$ export MAKETARGET=microsemi
-$ make
+	$ export MAKETARGET=microsemi
+	$ make
 
 Make exploit
 -----------
