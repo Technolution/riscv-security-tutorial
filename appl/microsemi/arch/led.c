@@ -61,7 +61,7 @@ void initLeds(void)
     GPIO_config(&g_gpio0, GPIO_14, GPIO_OUTPUT_MODE);
     GPIO_config(&g_gpio0, GPIO_15, GPIO_OUTPUT_MODE);
 
-    GPIO_set_outputs(&g_gpio0, 0x0000);
+    GPIO_set_outputs(&g_gpio0, 0xFF00);
     led_state = 0;
 }
 

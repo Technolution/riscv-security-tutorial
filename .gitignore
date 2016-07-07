@@ -7,6 +7,6 @@ appl/spike/work/*
 appl/microsemi/work/*
 
 exploit/work/*
-
+payload/work/*
 tools/terminal/*.pyc
 

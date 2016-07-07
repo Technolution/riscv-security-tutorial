@@ -208,7 +208,6 @@ handle_interrupt:
 	portSAVE_CONTEXT
 	portSAVE_EPC
 	jal vPortInterruptHandler
-	//jal	vPortSysTickHandler
 	portRESTORE_CONTEXT
 
 xPortStartScheduler:

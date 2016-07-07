@@ -140,6 +140,8 @@ class TerminalFrame(wx.Frame):
         self.settings = TerminalSetup()  # placeholder for the settings
         self.thread = None
         self.alive = threading.Event()
+        self.apply_bs = re.compile(".\b") # Don't use a raw string here 
+        self.find_last_feed = re.compile("\f(?=[^\f]*$)") # Don't use a raw string here 
         # begin wxGlade: TerminalFrame.__init__
         kwds["style"] = wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwds)
@@ -349,11 +351,15 @@ class TerminalFrame(wx.Frame):
 
     def WriteText(self, text):
         # handle backspace (use re to improve speed)
-        apply_bs = re.compile(".\b") # Don't use a raw string here 
-        text = apply_bs.sub("", text)
+        text = self.apply_bs.sub("", text)
+        feed_result = self.find_last_feed.search(text)
+        
+        if feed_result:
+            text = text[feed_result.end(0):]
+            self.text_ctrl_output.Clear()
 
         while(text != '' and text[0] == '\b'):
-            print "back"
+            #print "back"
             self.text_ctrl_output.Remove(self.text_ctrl_output.GetLastPosition()-1, self.text_ctrl_output.GetLastPosition())
             text = text[1:]
         

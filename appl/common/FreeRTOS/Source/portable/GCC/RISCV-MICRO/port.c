@@ -118,7 +118,6 @@ void vPortInterruptHandler(void);
 void UartRxRdyHandler(void);
 
 static timer_instance_t g_timer0;
-static timer_instance_t g_timer1;
 static gpio_instance_t g_gpio1;
 static plic_instance_t g_plic;
 
@@ -130,24 +129,20 @@ extern volatile tskTCB * volatile pxCurrentTCB;
 /* Sets and enable the timer interrupt */
 void vPortSetupTimer(void)
 {
+   /* Init PLIC, TMR, GPIO */
    PLIC_init(&g_plic, PLIC_BASE_ADDR, PLIC_NUM_SOURCES, PLIC_NUM_PRIORITIES);
    TMR_init(&g_timer0,CORETIMER0_BASE_ADDR,TMR_CONTINUOUS_MODE,PRESCALER_DIV_16,(configTICK_CLOCK_HZ / configTICK_RATE_HZ));
-
    GPIO_init(&g_gpio1, COREGPIO_OUT_BASE_ADDR, GPIO_APB_32_BITS_BUS);
 
+   /* Config GPIO */
    GPIO_config(&g_gpio1, GPIO_0, GPIO_OUTPUT_MODE);
-   
    GPIO_set_outputs(&g_gpio1, 0xFFFFFFFF);
-      
-   // Enable Timer 0 Interrupt
+
+   /* Enable Timer 0 Interrupt */
    PLIC_set_priority(&g_plic, INT_DEVICE_TIMER0, 1);  
    PLIC_enable_interrupt(&g_plic, INT_DEVICE_TIMER0);  
 
-   //PLIC_set_priority(&g_plic, INT_DEVICE_URXRDY, 1);
-   //PLIC_enable_interrupt(&g_plic, INT_DEVICE_URXRDY);
-
-
-   /* enable global interrupts and machine external interupt */
+   /* Enable global interrupts and machine external interupt */
    write_csr(mip, 0);
    set_csr(mie, MIP_MEIP);
 
@@ -174,6 +169,7 @@ void prvTaskExitError( void )
 /* Clear current interrupt mask and set given mask */
 void vPortClearInterruptMask(int mask)
 {
+	/* Put saved interrupt register */
 	__asm volatile("csrw mie, %0"::"r"(mask));
 }
 /*-----------------------------------------------------------*/
@@ -181,12 +177,11 @@ void vPortClearInterruptMask(int mask)
 /* Set interrupt mask and return current interrupt enable register */
 int vPortSetInterruptMask(void)
 {
-	//write(1,"before\n",7);
+	/* Save interrupt enable register and disable timer interrupt */
 	int ret;
 	__asm volatile("csrr %0,mie":"=r"(ret));
-	//write(1,"between\n",8);
 	__asm volatile("csrc mie,%0"::"i"(7));
-	//write(1,"after\n",6);
+
 	return ret;
 }
 /*-----------------------------------------------------------*/
@@ -199,7 +194,7 @@ StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack, TaskFunction_t px
 {
 	/* Simulate the stack frame as it would be created by a context switch
 	interrupt. */
-	//write(1,"Make stack \n",12);
+
 	register int *tp asm("x3");
 	pxTopOfStack--;
 	*pxTopOfStack = (portSTACK_TYPE)pxCode;			/* Start address */
@@ -229,7 +224,6 @@ void vPortSysTickHandler( void )
 
 void vPortInterruptHandler(void){
   plic_source int_num  = PLIC_claim_interrupt(&g_plic);
-
   switch(int_num){
   	  case INT_DEVICE_TIMER0: vPortSysTickHandler(); break;
   	  case INT_DEVICE_URXRDY: UartRxRdyHandler(); break;

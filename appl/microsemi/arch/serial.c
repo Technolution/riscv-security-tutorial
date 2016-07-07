@@ -109,8 +109,8 @@ signed portBASE_TYPE xSerialGetChar(xComPortHandle pxPort, signed char *pcRxedCh
 signed portBASE_TYPE xSerialPutChar(xComPortHandle pxPort, signed char cOutChar, TickType_t xBlockTime)
 {
     (void)pxPort;
-    return xQueueSend(xTxQueue, &cOutChar, xBlockTime); 
-}    
+    return xQueueSend(xTxQueue, &cOutChar, xBlockTime);
+}
 
 /**
  *
@@ -150,15 +150,16 @@ void vSerialClose(xComPortHandle xPort)
  */
 static void vSerialRXTask(void *pvParameters)
 {
-    uint8_t rx_data[MAX_RX_DATA_SIZE] = { 0 };
-    uint8_t rx_size = 0;
+	(void) pvParameters;
+	uint8_t rx_data[MAX_RX_DATA_SIZE] = { 0 };
+	uint8_t rx_size = 0;
 
-    for(;;){
+	for(;;){
 		rx_size = UART_get_rx(&g_uart, rx_data, sizeof(rx_data));
 		for(int i = 0; i < rx_size; i++){
-			xQueueSend(xRxQueue, &rx_data[i], NULL);
+			xQueueSend(xRxQueue, &rx_data[i], 0);
 		}
-    }
+	}
 }
 
 /**

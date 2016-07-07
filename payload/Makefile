@@ -1,6 +1,6 @@
 ################################################################################
 ##
-## (C) COPYRIGHT 2004 TECHNOLUTION BV, GOUDA NL
+## (C) COPYRIGHT 2016 TECHNOLUTION BV, GOUDA NL
 ## | =======          I                   ==          I    =
 ## |    I             I                    I          I
 ## |    I   ===   === I ===  I ===   ===   I  I    I ====  I   ===  I ===
@@ -13,7 +13,7 @@
 ##      |            |             ++++++++++++++++++++++++++++++++++++++|
 ##      +------------+                          +++++++++++++++++++++++++|
 ##                                                         ++++++++++++++|
-##              A U T O M A T I O N     T E C H N O L O G Y         +++++|
+##                                                                  +++++|
 ##
 ################################################################################
 ## RISC-V workshop elf gcc project file
@@ -23,94 +23,52 @@
 ## Global
 ################################################################################
 
-# Root of RISC-V tools installation. 
-RISCV 	= ~/maarten-tmp/toolchain32
+# Root of RISC-V tools installation. Note that we expect to find the spike
+# simulator header files here under $(RISCV)/include/spike .
+RISCV 	= /usr/local/msc-riscv32
 CROSS	= riscv32-unknown-elf
 ISA		= RV32IM 
 
-TARGET_DIR 	    = microsemi
-BUILD_DIR 		= $(TARGET_DIR)/work
-SRC_DIR 		= src
-COMMON_DIR 		= common
+BUILD_DIR 		= work
 
-CONFIG			= Makefile microsemi/Makefile.inc
+CONFIG			= Makefile
 
 ################################################################################
 ## Project variables
 ################################################################################
-TARGET 		= main
-CTARGET		= main
+TARGET 		= payload
+CTARGET		= payload
 
-LINK_FILE = $(TARGET_DIR)/arch/link.lds
+LINK_FILE = link.ld
 
 # flags to trigger warning generation
 WFLAGS = -Wall -Wextra -Wshadow -Wpointer-arith -Wbad-function-cast \
          -Wcast-align -Wsign-compare -Waggregate-return \
-         -Wstrict-prototypes -Wmissing-prototypes \
+         -Wstrict-prototypes -Wno-implicit-function-declaration \
          -Wmissing-declarations -Wunused \
-         -Wimplicit -Wswitch -Wreturn-type #-Wredundant-decls 
+         -Wimplicit -Wswitch -Wreturn-type #-Wredundant-decls  -Wmissing-prototypes 
 
 DBG_FLAGS = -O0
 
 AFLAGS =  -march=$(ISA) $(WFLAGS) $(DBG_FLAGS) -x assembler-with-cpp -c
-CFLAGS =  -march=$(ISA) -fno-common -fno-inline -fno-jump-tables $(WFLAGS) $(DBG_FLAGS) -c
-LFLAGS =  -march=$(ISA) -nostdlib -nostartfiles
+CFLAGS =  -march=$(ISA) $(WFLAGS) $(DBG_FLAGS) -c
+LFLAGS =  -march=$(ISA) -nostartfiles -static
 
 AFLAGS += -fno-strict-aliasing -fno-builtin -D__gracefulExit
 CFLAGS += -fomit-frame-pointer -fno-strict-aliasing -fno-builtin \
 	    -D__gracefulExit	    
 CFLAGS += -D_BUILD_HEX_TIME_=$(HEX_TIME) -D_BUILD_HEX_DATE_=$(HEX_DATE)
 
-# FreeRTOS
-FREERTOS_SOURCE_DIR = $(COMMON_DIR)/FreeRTOS/Source
-FREERTOS_SRC = \
-	$(FREERTOS_SOURCE_DIR)/croutine.c \
-	$(FREERTOS_SOURCE_DIR)/list.c \
-	$(FREERTOS_SOURCE_DIR)/queue.c \
-	$(FREERTOS_SOURCE_DIR)/tasks.c \
-	$(FREERTOS_SOURCE_DIR)/timers.c \
-	$(FREERTOS_SOURCE_DIR)/event_groups.c \
-	$(FREERTOS_SOURCE_DIR)/portable/MemMang/heap_2.c 
-	
-PORT_SRC = $(FREERTOS_SOURCE_DIR)/portable/GCC/RISCV-MICRO/port.c
-PORT_ASM = $(FREERTOS_SOURCE_DIR)/portable/GCC/RISCV-MICRO/portasm.S
-
 # application
-APP_SRC = $(SRC_DIR)/main.c \
-	$(SRC_DIR)/cmd_handler.c \
-	$(SRC_DIR)/freertos_hooks.c \
-	$(SRC_DIR)/tunnel.c \
-	$(SRC_DIR)/blink_pwm.c \
-	$(TARGET_DIR)/arch/led.c \
-	$(TARGET_DIR)/arch/serial.c \
-	$(TARGET_DIR)/arch/clib.c \
-	$(TARGET_DIR)/arch/syscall.c \
-	$(TARGET_DIR)/arch/init.c \
-	$(TARGET_DIR)/arch/drivers/CoreUARTapb/core_uart_apb.c \
-	$(TARGET_DIR)/arch/drivers/CoreGPIO/core_gpio.c \
-	$(TARGET_DIR)/arch/drivers/CoreTimer/core_timer.c \
-	$(TARGET_DIR)/arch/drivers_sifive/plic.c \
-	$(TARGET_DIR)/arch/hal/hw_reg_access.c 
-
 # support files
-ASM_SOURCES = $(TARGET_DIR)/arch/entry.S $(PORT_ASM)
-C_SOURCES 	= $(FREERTOS_SRC) $(PORT_SRC) $(APP_SRC)
+ASM_SOURCES = 
+C_SOURCES   = c_payload.c
+			  
 
-LIBS 		= 
-STD_LIBS	= -lc -lgcc
+LIBS 		=
+STD_LIBS	=
 
-INCLUDE_DIRS = 	src $(RISCV)/include/spike \
-				$(FREERTOS_SOURCE_DIR) \
-				$(FREERTOS_SOURCE_DIR)/portable/GCC/RISCV-MICRO \
-				$(FREERTOS_SOURCE_DIR)/include \
-				$(TARGET_DIR)/conf \
-				$(TARGET_DIR)/arch \
-				$(TARGET_DIR)/arch/drivers/CoreGPIO \
-				$(TARGET_DIR)/arch/drivers/CoreUARTapb \
-				$(TARGET_DIR)/arch/drivers/CoreTimer \
-				$(TARGET_DIR)/arch/drivers_sifive \
-				$(TARGET_DIR)/arch/hal \
-				$(COMMON_DIR)/include
+INCLUDE_DIRS 	= 	
 
 BUILD_DIRS  = $(sort $(addprefix $(BUILD_DIR)/,$(dir $(OBJS))) $(BUILD_DIR)/)
 OBJS 		= $(ASM_SOURCES:.S=.o) $(C_SOURCES:.c=.o)
@@ -122,9 +80,9 @@ OBJS 		= $(ASM_SOURCES:.S=.o) $(C_SOURCES:.c=.o)
     ############################################################################
     ## Phony targets
     ############################################################################
-.PHONY: clean all code binary run
+.PHONY: clean all code binary
 
-all: $(TARGET).elf  $(TARGET).ihx $(TARGET).nm $(TARGET).dump
+all: $(TARGET).elf $(TARGET).raw $(TARGET).dump
 
 clean: 
 	@$(call print_cmd_info,"CLEANUP",$@)
@@ -163,15 +121,22 @@ print_cmd_info_nonl	= printf "[%s] - %-20s : %s " `date +%H:%M:%S` $(1) $(2)
     ############################################################################
 	
 $(BUILD_DIRS)	:
-	@$(call print_cmd_info,"MK WORK DIR",$@)
-	@mkdir -p $@
+	@$(call print_cmd_info,"MK WORK DIR",$(dir $@))
+	@mkdir -p $(dir $@)
 
-    ############################################################################
-    ## surpress warnings generated in external provided files
-    ############################################################################
-%/core_uart_apb.o: CFLAGS += -Wno-unused-but-set-variable
-%/plic.o: CFLAGS += -Wno-missing-prototypes -Wno-missing-declarations
-%/hw_reg_access.o: CFLAGS += -Wno-missing-prototypes -Wno-missing-declarations
+
+$(LINK_FILE): $(BUILD_DIR)/exploit.ld
+
+$(BUILD_DIR)/exploit.ld: $(BUILD_DIR)/main.nm
+	@$(call print_cmd_info,"MK LINKER SCRIPT", $@)
+	@../exploit/tools/link_generator.py -n $< -o $@
+	
+$(BUILD_DIR)/main.nm: ../appl/microsemi/work/main.elf 
+	@$(call print_cmd_info,"MK SYMBOL FILE", $@)
+	@$(NM) $(<) > $(@)
+	
+../appl/microsemi/work/main.elf:
+	
 
 ################################################################################
 #### RISC-V GCC toolchain
@@ -188,6 +153,7 @@ CC		= $(CROSS)-gcc
 OBJDUMP	= $(CROSS)-objdump
 OBJCOPY	= $(CROSS)-objcopy
 NM		= $(CROSS)-nm
+SIZE	= $(CROSS)-size
 
     ############################################################################
     ## includes
@@ -213,6 +179,7 @@ $(BUILD_DIR)/%.d: %.S $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"DEPEND",$@)
 	@$(CC) $(CFLAGS) $(INCLUDE_DIRS:%=-I%) -MT $(<:S=o) -MM $< > $(@) || ($(RM) $(BUILD_DIR)/$(@); false)
 
+
 %.o: %.c %.d $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"COMPILE",$@)
 	@$(CC) -Wa,-adhlns=$(BUILD_DIR)/$(*).lst $(INCLUDE_DIRS:%=-I%) $(CFLAGS) $< -o $(BUILD_DIR)/$(@)
@@ -227,29 +194,38 @@ $(BUILD_DIR)/%.d: %.S $(CONFIG) | $(BUILD_DIRS)
 
 %.elf: $(OBJS) $(LIBS) $(CONFIG) $(LINK_FILE) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"LINKING",$@)
-	@$(CC) $(LFLAGS) -Wl,-T -Wl,$(LINK_FILE) -Wl,-Map=$(BUILD_DIR)/$(*F).map $(OBJS:%=$(BUILD_DIR)/%) $(LIBS)  $(STD_LIBS) -o $(BUILD_DIR)/$(@)
+	@$(CC) $(LFLAGS) -Wl,-T -Wl,$(LINK_FILE) -Wl,-Map=$(BUILD_DIR)/$(*).map $(OBJS:%=$(BUILD_DIR)/%) $(LIBS) $(STD_LIBS:%=-l%) -o $(BUILD_DIR)/$(@)
 
 %.hex: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN HEX",$@)
-	@$(OBJCOPY) -O ihex $(BUILD_DIR)/$(<F) $(BUILD_DIR)/$(@F)
-
-%.ihx: %.hex $(CONFIG) | $(BUILD_DIRS)
-	@$(call print_cmd_info,"GEN IHX",$@)
-	@tail -n +2 $(BUILD_DIR)/$(<F) > $(BUILD_DIR)/$(@F)
+	@$(OBJCOPY) -O ihex $(BUILD_DIR)/$(<) $(BUILD_DIR)/$(@)
 
 %.nm: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN NM",$@)
-	@$(NM) $(BUILD_DIR)/$(<F) > $(BUILD_DIR)/$(@F)
+	@$(NM) $(BUILD_DIR)/$(<) > $(BUILD_DIR)/$(@)
 
 %.srec: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN HEX",$@)
-	@$(OBJCOPY) -O srec $(BUILD_DIR)/$(<F) $(BUILD_DIR)/$(@F)
+	@$(OBJCOPY) -O srec $(BUILD_DIR)/$(<) $(BUILD_DIR)/$(@)
 
-%.bin: %.elf $(CONFIG) | $(BUILD_DIRS)
+%.raw: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN BIN",$@)
-	@$(OBJCOPY) -O binary $(BUILD_DIR)/$(<F) $(BUILD_DIR)/$(@F)
+	@$(OBJCOPY) -O binary --strip-all $(BUILD_DIR)/$(<) $(BUILD_DIR)/$(@)
+
+%.nm: %.elf $(BUILD_DIR_DEP) $(CONFIG)
+	@$(call print_cmd_info,"GEN NM",$@)
+	@$(NM) $(BUILD_DIR)/$(<F) > $(BUILD_DIR)/$(@F)
+
+%.srec: %.elf $(BUILD_DIR_DEP) $(CONFIG)
+	@$(call print_cmd_info,"GEN HEX",$@)
+	@$(OBJCOPY) -O srec $(BUILD_DIR)/$(<F) $(BUILD_DIR)/$(@F)
 
 %.dump: %.elf $(BUILD_DIR_DEP) $(CONFIG)
 	@$(call print_cmd_info,"GEN DUMP",$@)
 	@$(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.rodata --section=.sbss --section=.sbss2 --section=.data  $(BUILD_DIR)/$(<F) > $(BUILD_DIR)/$(@F)
+
+.PHONY: size
+size: $(TARGET).elf $(BUILD_DIR_DEP) $(CONFIG)
+	@$(call print_cmd_info,"GEN DUMP",$@)
+	@$(SIZE) $(BUILD_DIR)/$(<F)
 
