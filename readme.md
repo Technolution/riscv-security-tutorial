@@ -25,7 +25,7 @@ Program FPGA
 * Click New..
 * Select programming job file: riscv-security-tutorial/fpga/sf2_1_full.job
 
-![Settings terminal](img/new-job-flash.png?raw=true "FPExpress programming startup windows")
+![Settings terminal](manual/img/new-job-flash.png?raw=true "FPExpress programming startup windows")
 * Click the large RUN button
  
 You should now see blinking leds on the FPGA. Furthermore, you should already have access to the terminal and 
@@ -106,7 +106,7 @@ Upload exploit & payload
 * Select riscv-security-tutorial/exploit_downloader/build/exploit_downloader.raw 
 * See ready...
 
-![exploit](img/exploit.png?raw=true "exploit")
+![exploit](manual/img/exploit.png?raw=true "exploit")
 * Tools > Upload blob..
 * Select riscv-security-tutorial/payload/build/payload.raw
 * See HACKED
