@@ -43,10 +43,6 @@ MEMORY
     ram   (xrw) : ORIGIN = 0x80000000, LENGTH = 64K
 }
 
-/* Specify the default entry point to the program */
-
-/* ENTRY(start) */
-
 /*****************************************************************************
  * Define the sections, and where they are mapped in memory 
  ****************************************************************************/

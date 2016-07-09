@@ -135,7 +135,7 @@ class TerminalFrame(wx.Frame):
     def __init__(self, *args, **kwds):
         self.serial = serial.Serial()
         self.serial.baudrate = 57600
-        self.serial.port = "COM13"
+        self.serial.port = "/dev/ttyUSB2"
         self.serial.timeout = 0.5   # make sure that the alive event can be checked from time to time
         self.settings = TerminalSetup()  # placeholder for the settings
         self.thread = None
@@ -304,7 +304,7 @@ class TerminalFrame(wx.Frame):
         defaultDir = "../../exploit/work/" #os.path.abspath("../../exploit/work/")
         openFileDialog = wx.FileDialog(self, "Upload file ...", 
                                        defaultDir=defaultDir, defaultFile="exploit.raw", 
-                                       wildcard=("Bin files (*.raw)|*.raw|All files (*.*)|*.*"), 
+                                       wildcard=("Modified bin files (*.raw;*.bin)|*.raw;*.bin|All files (*.*)|*.*"), 
                                        style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         openFileDialog.ShowModal()
         path = openFileDialog.GetPath()

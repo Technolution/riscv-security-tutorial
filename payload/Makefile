@@ -82,7 +82,7 @@ OBJS 		= $(ASM_SOURCES:.S=.o) $(C_SOURCES:.c=.o)
     ############################################################################
 .PHONY: clean all code binary
 
-all: $(TARGET).elf $(TARGET).raw $(TARGET).dump
+all: $(TARGET).elf $(TARGET).bin $(TARGET).dump
 
 clean: 
 	@$(call print_cmd_info,"CLEANUP",$@)
@@ -208,7 +208,7 @@ $(BUILD_DIR)/%.d: %.S $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN HEX",$@)
 	@$(OBJCOPY) -O srec $(BUILD_DIR)/$(<) $(BUILD_DIR)/$(@)
 
-%.raw: %.elf $(CONFIG) | $(BUILD_DIRS)
+%.bin: %.elf $(CONFIG) | $(BUILD_DIRS)
 	@$(call print_cmd_info,"GEN BIN",$@)
 	@$(OBJCOPY) -O binary --strip-all $(BUILD_DIR)/$(<) $(BUILD_DIR)/$(@)
 

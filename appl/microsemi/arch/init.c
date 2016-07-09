@@ -33,9 +33,6 @@
 #include "syscall.h"
 #include "clib.h"
 
-extern plic_instance_t g_plic;
-
-
 #define HEAP_DUMP_ON_TRAP   (0)
 
 uintptr_t handle_trap(uintptr_t mcause, uintptr_t epc);

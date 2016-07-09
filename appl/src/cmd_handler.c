@@ -89,6 +89,7 @@ static int ReceiveCmd(char* buf)
             idx -= 2;
         }
 
+        /* add some verbosity for the demo */
         if (verbose >= 2) {
             printf("buf[%d] = 0x%02x\n", idx, buf[idx]);
         }

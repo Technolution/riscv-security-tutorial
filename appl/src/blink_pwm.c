@@ -35,6 +35,10 @@
 #include "blink_pwm.h"
 #include "led.h"
 
+void ledOn(void);
+void ledOff(void);
+
+
 #define LED_PWM_TICKS (10)
 static void vLedPwmTask( void *pvParameters );
 
@@ -45,38 +49,38 @@ void vCreateLedTasks( void )
 
 static void vLedPwmTask( void *pvParameters )
 {
-	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = LED_PWM_TICKS;
+    TickType_t xLastWakeTime;
+    (void) pvParameters;
 
     // Initialise the xLastWakeTime variable with the current time.
     xLastWakeTime = xTaskGetTickCount();
 
     for(;;){
         // Wait for the next cycle.
-		for(int i = 1;i<10;i++){
-			for(int a = 0;a<10;a++){
-			vTaskDelayUntil( &xLastWakeTime, i );
-			ledOn();
-			vTaskDelayUntil( &xLastWakeTime, 10-i );
-			ledOff();
-    	}
-		}
-		for(int i = 9;i>0;i--){
-			for(int a = 0;a<10;a++){
-			vTaskDelayUntil( &xLastWakeTime, i );
-			ledOn();
-			vTaskDelayUntil( &xLastWakeTime, 10-i);
-			ledOff();
-    	}
-		}
-    }	
+        for(int i = 1; i < LED_PWM_TICKS; i++){
+                for(int a = 0;a<10;a++){
+                vTaskDelayUntil(&xLastWakeTime, i);
+                ledOn();
+                vTaskDelayUntil(&xLastWakeTime, LED_PWM_TICKS - i);
+                ledOff();
+            }
+        }
+        for(int i = 9; i > 0; i--){
+            for(int a = 0; a < LED_PWM_TICKS; a++){
+                vTaskDelayUntil(&xLastWakeTime, i);
+                ledOn();
+                vTaskDelayUntil(&xLastWakeTime, LED_PWM_TICKS - i);
+                ledOff();
+            }
+        }
+    }
 }
 
 void ledOn(void){
-	setLeds(0x0000,0xFB00);
+    setLeds(0x0000, 0xFB00);
 }
 
 void ledOff(void){
-	setLeds(0xFF00,0xFB00);
+    setLeds(0xFF00, 0xFB00);
 }
 	
