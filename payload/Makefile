@@ -30,6 +30,9 @@ BUILD_DIR 		= build
 
 CONFIG			= Makefile
 
+EXPLOIT_BUILDER	= ../tools/exploit_tools/exploit_builder.py
+LINK_GENERATOR 	= ../tools/exploit_tools/link_generator.py
+
 ################################################################################
 ## Project variables
 ################################################################################
@@ -91,12 +94,11 @@ test:
     ############################################################################
     ## file based targets
     ############################################################################
-
 $(LINK_FILE): $(BUILD_DIR)/exploit.ld
 
-$(BUILD_DIR)/exploit.ld: $(BUILD_DIR)/main.nm
+$(BUILD_DIR)/exploit.ld: $(BUILD_DIR)/main.nm $(LINK_GENERATOR)
 	@$(call print_cmd_info,"MK LINKER SCRIPT", $@)
-	@../exploit/tools/link_generator.py -n $< -o $@
+	@$(LINK_GENERATOR) -n $< -o $@
 	
 $(BUILD_DIR)/main.nm: ../appl/build/main.elf 
 	@$(call print_cmd_info,"MK SYMBOL FILE", $@)
