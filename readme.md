@@ -80,7 +80,7 @@ and only visible when you hover with the mouse over the tob bar.
 Exploit bootstrapping
 =======================
 The buffer only allows very small applications. We will now use a bootstrap mechanism with a downloader to load a 
-bigger exploid program.
+bigger exploid program. We will start from the normal terminal of the program. To be sure you are running from the right prompt, reset you board.
 
 Make exploit downloader
 -----------
