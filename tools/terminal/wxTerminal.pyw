@@ -301,7 +301,7 @@ class TerminalFrame(wx.Frame):
                 ok = True
 
     def OnUploadBlob(self, event):
-        defaultDir = "../../exploit/work/" #os.path.abspath("../../exploit/work/")
+        defaultDir = "../../exploit/build/" #os.path.abspath("../../exploit/work/")
         openFileDialog = wx.FileDialog(self, "Upload file ...", 
                                        defaultDir=defaultDir, defaultFile="exploit.raw", 
                                        wildcard=("Modified bin files (*.raw;*.bin)|*.raw;*.bin|All files (*.*)|*.*"), 

@@ -70,109 +70,98 @@
     1 tab == 4 spaces!
 */
 
-OUTPUT_ARCH( "riscv" )
 
-_STACK_SIZE = DEFINED(_STACK_SIZE) ? _STACK_SIZE : 0x10000;
-_HEAP_SIZE = DEFINED(_HEAP_SIZE) ? _HEAP_SIZE : 0x10000;
+#ifndef PORTMACRO_H
+#define PORTMACRO_H
 
-/*****************************************************************************
- * Define memory layout
- ****************************************************************************/
-MEMORY {
-	imem : ORIGIN = 0x00000000, LENGTH = 0x00200000
-	dmem : ORIGIN = 0x08000000, LENGTH = 0x00200000
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/*-----------------------------------------------------------
+ * Port specific definitions.
+ *
+ * The settings in this file configure FreeRTOS correctly for the
+ * given hardware and compiler.
+ *
+ * These settings should not be altered.
+ *-----------------------------------------------------------
+ */
+
+/* Type definitions. */
+#define portCHAR		char
+#define portFLOAT		float
+#define portDOUBLE		double
+#define portLONG		long
+#define portSHORT		short
+#define portBASE_TYPE	long
+
+#ifdef __riscv64
+	#define portSTACK_TYPE	uint64_t
+	#define portPOINTER_SIZE_TYPE	uint64_t
+#else
+	#define portSTACK_TYPE	uint32_t
+	#define portPOINTER_SIZE_TYPE	uint32_t
+#endif
+
+typedef portSTACK_TYPE StackType_t;
+typedef long BaseType_t;
+typedef unsigned long UBaseType_t;
+
+#if( configUSE_16_BIT_TICKS == 1 )
+	typedef uint16_t TickType_t;
+	#define portMAX_DELAY ( TickType_t ) 0xffff
+#else
+	typedef uint32_t TickType_t;
+	#define portMAX_DELAY ( TickType_t ) 0xffffffffUL
+#endif
+/*-----------------------------------------------------------*/
+
+/* Architecture specifics. */
+#define portSTACK_GROWTH			( -1 )
+#define portTICK_PERIOD_MS			( ( TickType_t ) (1000 / configTICK_RATE_HZ) )
+#ifdef __riscv64
+	#define portBYTE_ALIGNMENT	8
+#else
+	#define portBYTE_ALIGNMENT	4
+#endif
+#define portCRITICAL_NESTING_IN_TCB					1
+/*-----------------------------------------------------------*/
+
+
+/* Scheduler utilities. */
+extern void vPortYield( void );
+#define portYIELD()					vPortYield()
+/*-----------------------------------------------------------*/
+
+
+/* Critical section management. */
+extern int vPortSetInterruptMask( void );
+extern void vPortClearInterruptMask( int );
+extern void vTaskEnterCritical( void );
+extern void vTaskExitCritical( void );
+
+#define portDISABLE_INTERRUPTS()				__asm volatile 	( "csrc mstatus,4" )
+#define portENABLE_INTERRUPTS()					__asm volatile 	( "csrs mstatus,4" )
+#define portENTER_CRITICAL()					vTaskEnterCritical()
+#define portEXIT_CRITICAL()						vTaskExitCritical()
+#define portYIELD_FROM_ISR()					vTaskSwitchContext()
+#define portEXIT_CRITICAL()						vTaskExitCritical()
+#define portSET_INTERRUPT_MASK_FROM_ISR()       vPortSetInterruptMask()
+#define portCLEAR_INTERRUPT_MASK_FROM_ISR( uxSavedStatusValue )       vPortClearInterruptMask( uxSavedStatusValue )
+/*-----------------------------------------------------------*/
+
+/* Task function macros as described on the FreeRTOS.org WEB site. */
+#define portTASK_FUNCTION_PROTO( vFunction, pvParameters ) void vFunction( void *pvParameters )
+#define portTASK_FUNCTION( vFunction, pvParameters ) void vFunction( void *pvParameters )
+
+#define portNOP() __asm volatile 	( " nop " )
+
+#ifdef __cplusplus
 }
+#endif
 
-/* Specify the default entry point to the program */
+#endif /* PORTMACRO_H */
 
-ENTRY(_mstart)
-
-/*****************************************************************************
- * Define the sections, and where they are mapped in memory 
- ****************************************************************************/
-SECTIONS {
-	.text : {
-		. = 0x100;
-	    *boot.o(.text);
-		*(.text);
-		*(.text.*);
-	} > imem
-
-	.init : {
-	   KEEP (*(.init))
-	} > imem
-
-    .fini : {
-       KEEP (*(.fini))
-    } > imem
-
-    .rodata : {
-       __rodata_start = .;
-       *(.rodata)
-       *(.rodata.*)
-       *(.gnu.linkonce.r.*)
-       __rodata_end = .;
-	} > dmem
-
-	.sbss : {
-	   __sbss_start = .;
-	   *(.sbss)
-	   *(.sbss.*)
-	   *(.gnu.linkonce.sb.*)
-	   __sbss_end = .;
-	} > dmem
-	
-    .sdata : {
-        _gp = . + 0x800;
-        *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2) *(.srodata*)
-        *(.sdata .sdata.* .gnu.linkonce.s.*)
-     }	> dmem
-
-	.sbss2 : {
-	   __sbss2_start = .;
-	   *(.sbss2)
-	   *(.sbss2.*)
-	   *(.gnu.linkonce.sb2.*)
-	   __sbss2_end = .;
-	} > dmem
-
-	.data : {
-	   . = ALIGN(8);
-	   __data_start = .;
-	   *(.data)
-	   *(.data.*)
-	   *(.gnu.linkonce.d.*)
-	   __data_end = .;
-	} > dmem
-
-    .bss : {
-       . = ALIGN(8);
-       __bss_start = .;
-       *(.bss)
-       *(.bss.*)
-       *(.gnu.linkonce.b.*)
-       *(COMMON)
-       . = ALIGN(4);
-       __bss_end = .;
-    } > dmem
-
-    /* Generate Stack and Heap definitions */
-
-    .heap : {
-       . = ALIGN(8);
-       _heap = .;
-       _heap_start = .;
-       . += _HEAP_SIZE;
-       _heap_end = .;
-    } > dmem
-
-    .stack : {
-       _stack_end = .;
-       . += _STACK_SIZE;
-       . = ALIGN(8);
-       _stack = .;
-       __stack = _stack;
-    } > dmem
-    
-    _end = .;
-}

@@ -3,10 +3,8 @@
 .pydevproject
 .settings/*
 
-appl/spike/work/*
-appl/microsemi/work/*
+*/build/*
+*/*/build/*
 
-exploit/work/*
-payload/work/*
 tools/terminal/*.pyc
 

@@ -70,90 +70,173 @@
     1 tab == 4 spaces!
 */
 
-#include <stdint.h>
-#include <string.h>
-#include "syscalls.h"
+/*-----------------------------------------------------------
+ * Implementation of functions defined in portable.h for the RISC-V port.
+ *----------------------------------------------------------*/
+
+/* Scheduler includes. */
+#include "stdint.h"
+#include "portmacro.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "encoding.h"
+#include "shared.h"
+
 #include "clib.h"
 
-/* Relay syscall to host */
-static long prvSyscallToHost(long which, long arg0, long arg1, long arg2 , long arg3, long arg4)
+/* A variable is used to keep track of the critical section nesting.  This
+variable has to be stored as part of the task context and must be initialised to
+a non zero value to ensure interrupts don't inadvertently become unmasked before
+the scheduler starts.  As it is stored as part of the task context it will
+automatically be set to 0 when the first task is started. */
+static UBaseType_t uxCriticalNesting;
+
+/* Contains context when starting scheduler, save all 31 registers */
+#ifdef __gracefulExit
+BaseType_t xStartContext[31] = {0};
+#endif
+
+/*
+ * Handler for timer interrupt
+ */
+void vPortSysTickHandler( void );
+
+/*
+ * Setup the timer to generate the tick interrupts.
+ */
+void vPortSetupTimer( void );
+
+
+/*
+ * Used to catch tasks that attempt to return from their implementing function.
+ */
+static void prvTaskExitError( void );
+
+/*
+ * Interrupt handler including the timer tick
+ */
+void vPortInterruptHandler(void);
+void UartRxRdyHandler(void);
+
+static timer_instance_t g_timer0;
+static gpio_instance_t g_gpio1;
+static plic_instance_t g_plic;
+
+typedef void tskTCB;
+extern volatile tskTCB * volatile pxCurrentTCB;
+
+/*-----------------------------------------------------------*/
+
+/* Sets and enable the timer interrupt */
+void vPortSetupTimer(void)
 {
-	volatile uint64_t magic_mem[8] __attribute__((aligned(64)));
-	magic_mem[0] = which;
-	magic_mem[1] = arg0;
-	magic_mem[2] = arg1;
-	magic_mem[3] = arg2;
-	magic_mem[4] = arg3;
-	magic_mem[5] = arg4;
-	__sync_synchronize();
-	write_csr(mtohost, (long) magic_mem);
-	while (swap_csr(mfromhost, 0) == 0)
-		;
-	return magic_mem[0];
+   /* Init PLIC, TMR, GPIO */
+   PLIC_init(&g_plic, PLIC_BASE_ADDR, PLIC_NUM_SOURCES, PLIC_NUM_PRIORITIES);
+   TMR_init(&g_timer0,CORETIMER0_BASE_ADDR,TMR_CONTINUOUS_MODE,PRESCALER_DIV_16,(configTICK_CLOCK_HZ / configTICK_RATE_HZ));
+   GPIO_init(&g_gpio1, COREGPIO_OUT_BASE_ADDR, GPIO_APB_32_BITS_BUS);
+
+   /* Config GPIO */
+   GPIO_config(&g_gpio1, GPIO_0, GPIO_OUTPUT_MODE);
+   GPIO_set_outputs(&g_gpio1, 0xFFFFFFFF);
+
+   /* Enable Timer 0 Interrupt */
+   PLIC_set_priority(&g_plic, INT_DEVICE_TIMER0, 1);  
+   PLIC_enable_interrupt(&g_plic, INT_DEVICE_TIMER0);  
+
+   /* Enable global interrupts and machine external interupt */
+   write_csr(mip, 0);
+   set_csr(mie, MIP_MEIP);
+
+   /* Start timer */
+   TMR_enable_int(&g_timer0);
+   TMR_start(&g_timer0);
 }
 /*-----------------------------------------------------------*/
 
-/* Exit systemcall */
-static void prvSyscallExit(long code)
+void prvTaskExitError( void )
 {
-	write_csr(mtohost, (code << 1) | 1);
-	for(;;) { }
+	/* A function that implements a task must not exit or attempt to return to
+	its caller as there is nothing to return to.  If a task wants to exit it
+	should instead call vTaskDelete( NULL ).
+
+	Artificially force an assert() to be triggered if configASSERT() is
+	defined, then stop here so application writers can catch the error. */
+	configASSERT( uxCriticalNesting == ~0UL );
+	portDISABLE_INTERRUPTS();
+	for( ;; );
 }
 /*-----------------------------------------------------------*/
 
-/* Prints a string with a syscall  */
-static void printstr(const char* s)
+/* Clear current interrupt mask and set given mask */
+void vPortClearInterruptMask(int mask)
 {
-	syscall(SYS_write, 1, (long) s, strlen(s), 0, 0);
+	/* Put saved interrupt register */
+	__asm volatile("csrw mie, %0"::"r"(mask));
 }
 /*-----------------------------------------------------------*/
 
-/* Fires a syscall */
-long syscall(long num, long arg0, long arg1, long arg2 , long arg3, long arg4)
+/* Set interrupt mask and return current interrupt enable register */
+int vPortSetInterruptMask(void)
 {
-	register long a7 asm("a7") = num;
-	register long a0 asm("a0") = arg0;
-	register long a1 asm("a1") = arg1;
-	register long a2 asm("a2") = arg2;
-	register long a3 asm("a3") = arg3;
-	register long a4 asm("a4") = arg4;
-	asm volatile ("scall":"+r"(a0) : "r"(a1), "r"(a2), "r"(a3), "r"(a4), "r"(a7));
-	return a0;
+	/* Save interrupt enable register and disable timer interrupt */
+	int ret;
+	__asm volatile("csrr %0,mie":"=r"(ret));
+	__asm volatile("csrc mie,%0"::"i"(7));
+
+	return ret;
+}
+/*-----------------------------------------------------------*/
+
+
+/*
+ * See header file for description.
+ */
+StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack, TaskFunction_t pxCode, void *pvParameters )
+{
+	/* Simulate the stack frame as it would be created by a context switch
+	interrupt. */
+
+	register int *tp asm("x3");
+	pxTopOfStack--;
+	*pxTopOfStack = (portSTACK_TYPE)pxCode;			/* Start address */
+	pxTopOfStack -= 22;
+	*pxTopOfStack = (portSTACK_TYPE)pvParameters;	/* Register a0 */
+	pxTopOfStack -= 6;
+	*pxTopOfStack = (portSTACK_TYPE)tp; /* Register thread pointer */
+	pxTopOfStack -= 3;
+	*pxTopOfStack = (portSTACK_TYPE)prvTaskExitError; /* Register ra */
+	
+	return pxTopOfStack;
+}
+/*-----------------------------------------------------------*/
+
+void vPortSysTickHandler( void )
+{
+
+	/* Increment the RTOS tick. */
+	if( xTaskIncrementTick() != pdFALSE )
+	{
+		vTaskSwitchContext();
+	}
+	TMR_clear_int(&g_timer0);
+}
+/*-----------------------------------------------------------*/
+
+
+void vPortInterruptHandler(void){
+  plic_source int_num  = PLIC_claim_interrupt(&g_plic);
+  switch(int_num){
+  	  case INT_DEVICE_TIMER0: vPortSysTickHandler(); break;
+  	  case INT_DEVICE_URXRDY: UartRxRdyHandler(); break;
+  }
+  PLIC_complete_interrupt(&g_plic, int_num);
 }
 
-/*-----------------------------------------------------------*/
 
 /* Programs need to override this function. */
-int __attribute__((weak)) main(__attribute__ ((unused)) int argc, __attribute__ ((unused)) char** argv)
+void __attribute__((weak)) UartRxRdyHandler(void)
 {
-	printstr("Implement a main function!\n");
-	return -1;
+	printf("[UART_RXXRDY] implement handler!\n");
+	return;
 }
-/*-----------------------------------------------------------*/
 
-/* Starts main function. */
-void vSyscallInit(void)
-{
-	int ret = main(0, 0);
-	exit(ret);
-}
-/*-----------------------------------------------------------*/
-
-/* Trap handeler */
-unsigned long ulSyscallTrap(long cause, long epc, long regs[32])
-{
-	long returnValue = 0;
-
-	if (cause != CAUSE_MACHINE_ECALL) {
-		prvSyscallExit(cause);
-	} else if (regs[17] == SYS_exit) {
-		prvSyscallExit(regs[10]);
-	} else {
-		returnValue = prvSyscallToHost(regs[17], regs[10], regs[11], regs[12] , regs[13], regs[14]);
-	}
-
-	regs[10] = returnValue;
-	return epc + 4;
-}
-/*-----------------------------------------------------------*/

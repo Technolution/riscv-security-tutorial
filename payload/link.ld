@@ -61,6 +61,7 @@ SECTIONS {
     } > mem
 
     .rodata : {
+        . = ALIGN(4);
        __rodata_start = .;
        *(.rodata)
        *(.rodata.*)
@@ -77,6 +78,7 @@ SECTIONS {
 	} > mem
 	
     .sdata : {
+        . = ALIGN(4);
         _gp = . + 0x800;
         *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2) *(.srodata*)
         *(.sdata .sdata.* .gnu.linkonce.s.*)
@@ -112,4 +114,4 @@ SECTIONS {
       
     __exploit_end = .;
 }
-INCLUDE "work/exploit.ld";
+INCLUDE "build/exploit.ld";

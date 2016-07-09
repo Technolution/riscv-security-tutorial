@@ -40,7 +40,8 @@
  * Main function that will initialize all tasks and call the scheduler.
  */
 int main( void ){
-	dbprintf("start main\n");
+	dbprintf("Tutorial 4th RISC-V workshop - Technolution session\n");
+	dbprintf("(build date: %08x, build time: %08x\n", _BUILD_HEX_DATE_, _BUILD_HEX_TIME_);
 
 	initLeds();
 
